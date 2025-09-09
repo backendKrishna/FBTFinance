@@ -8,10 +8,14 @@ dotenv.config();
 
 const app = express();
 app.use(cors({
-  origin: ['http://localhost:5173', 'https://school-1-ubkg.onrender.com'],
-  methods: ['GET','POST','PUT','DELETE'],
+  origin: [
+    'http://localhost:5173',
+    'https://fbt-front.onrender.com'
+  ],
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true
 }));
+
 
 app.use(express.json());
 app.use('/api/auth', require('./routes/authRoutes'));
