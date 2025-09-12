@@ -267,39 +267,66 @@ const ExcelJS = require('exceljs');
 const addIncome = async (req, res) => {
   try {
     const { title, type, amount, date, category } = req.body;
+    if (!title || !amount || !date) {
+      return res.status(400).json({ success: false, message: "Missing required fields" });
+    }
+
     const income = new Income({
       title,
       type,
       amount,
       date,
       category,
-      user: req.user.id,
+      user: req.user.id
     });
+
     await income.save();
     res.status(201).json({ success: true, income });
   } catch (err) {
+    console.error("❌ Error adding income:", err);
     res.status(500).json({ success: false, error: err.message });
   }
 };
+
 
 // ✅ Add new expense
 const addExpense = async (req, res) => {
   try {
     const { title, type, amount, date, category } = req.body;
+
+    // 🔹 Basic validation
+    if (!title || !amount || !date) {
+      return res.status(400).json({
+        success: false,
+        message: "Title, amount, and date are required"
+      });
+    }
+
+    // 🔹 Create expense
     const expense = new Expense({
       title,
       type,
       amount,
       date,
       category,
-      user: req.user.id,
+      user: req.user.id,   // needs authentication middleware to populate req.user
     });
+
+    // 🔹 Save to DB
     await expense.save();
-    res.status(201).json({ success: true, expense });
+
+    res.status(201).json({
+      success: true,
+      message: "Expense added successfully",
+      expense
+    });
+
   } catch (err) {
+    console.error("❌ Error adding expense:", err);
     res.status(500).json({ success: false, error: err.message });
   }
 };
+
 
 // ✅ Get incomes with filters
 const getIncomes = async (req, res) => {
