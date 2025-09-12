@@ -128,7 +128,7 @@ const getExpenses = async (req, res) => {
 //   }
 // };
 
-const getSummary = async (req, res) => {
+const getFinanceSummary = async (req, res) => {
   try {
     const { month, year } = req.query;
     let dateFilter = {};
