@@ -45,40 +45,116 @@ const addExpense = async (req, res) => {
 
 
 // Get all incomes
+// const getIncomes = async (req, res) => {
+//   try {
+//     const incomes = await Income.find().sort({ date: -1 });
+//     res.json(incomes);
+//   } catch (err) {
+//     res.status(500).json({ message: err.message });
+//   }
+// };
+
+// // Get all expenses
+// const getExpenses = async (req, res) => {
+//   try {
+//     const expenses = await Expense.find().sort({ date: -1 });
+//     res.json(expenses);
+//   } catch (err) {
+//     res.status(500).json({ message: err.message });
+//   }
+// };
+
+
+
+// Get all incomes with filters (month, year, type, category)
 const getIncomes = async (req, res) => {
   try {
-    const incomes = await Income.find().sort({ date: -1 });
+    const { month, year, type, category } = req.query;
+    let filter = { user: req.user.id };
+
+    // Month + Year filter
+    if (month && year) {
+      const start = new Date(year, month - 1, 1);  // 1st of month
+      const end = new Date(year, month, 0, 23, 59, 59); // last day
+      filter.date = { $gte: start, $lte: end };
+    }
+
+    if (type) filter.type = type;
+    if (category) filter.category = category;
+
+    const incomes = await Income.find(filter).sort({ date: -1 });
     res.json(incomes);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 };
 
-// Get all expenses
+// Get all expenses with filters
 const getExpenses = async (req, res) => {
   try {
-    const expenses = await Expense.find().sort({ date: -1 });
+    const { month, year, type, category } = req.query;
+    let filter = { user: req.user.id };
+
+    if (month && year) {
+      const start = new Date(year, month - 1, 1);
+      const end = new Date(year, month, 0, 23, 59, 59);
+      filter.date = { $gte: start, $lte: end };
+    }
+
+    if (type) filter.type = type;
+    if (category) filter.category = category;
+
+    const expenses = await Expense.find(filter).sort({ date: -1 });
     res.json(expenses);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 };
 
+
 // Summary: total income, total expense, balance
-const getFinanceSummary = async (req, res) => {
+// const getFinanceSummary = async (req, res) => {
+//   try {
+//     const incomes = await Income.find();
+//     const expenses = await Expense.find();
+
+//     const totalIncome = incomes.reduce((sum, i) => sum + i.amount, 0);
+//     const totalExpense = expenses.reduce((sum, e) => sum + e.amount, 0);
+//     const balance = totalIncome - totalExpense;
+
+//     res.json({ totalIncome, totalExpense, balance });
+//   } catch (err) {
+//     res.status(500).json({ message: err.message });
+//   }
+// };
+
+const getSummary = async (req, res) => {
   try {
-    const incomes = await Income.find();
-    const expenses = await Expense.find();
+    const { month, year } = req.query;
+    let dateFilter = {};
 
-    const totalIncome = incomes.reduce((sum, i) => sum + i.amount, 0);
-    const totalExpense = expenses.reduce((sum, e) => sum + e.amount, 0);
-    const balance = totalIncome - totalExpense;
+    if (month && year) {
+      const start = new Date(year, month - 1, 1);
+      const end = new Date(year, month, 0, 23, 59, 59);
+      dateFilter = { date: { $gte: start, $lte: end } };
+    }
 
-    res.json({ totalIncome, totalExpense, balance });
+    const incomes = await Income.find({ user: req.user.id, ...dateFilter });
+    const expenses = await Expense.find({ user: req.user.id, ...dateFilter });
+
+    const totalIncome = incomes.reduce((acc, i) => acc + i.amount, 0);
+    const totalExpense = expenses.reduce((acc, e) => acc + e.amount, 0);
+
+    res.json({
+      totalIncome,
+      totalExpense,
+      balance: totalIncome - totalExpense,
+    });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 };
+
 // Update income
 const updateIncome = async (req, res) => {
   try {
