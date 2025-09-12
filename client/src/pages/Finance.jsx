@@ -1771,7 +1771,7 @@ const Finance = () => {
                 className="border p-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                 aria-label="Select Year"
               >
-                {Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - 2 + i).map((y) => (
+                {Array.from({ length: 10 }, (_, i) => new Date().getFullYear() - 1 + i).map((y) => (
                   <option key={y} value={y}>
                     {y}
                   </option>
