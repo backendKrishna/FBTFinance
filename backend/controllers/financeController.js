@@ -494,14 +494,34 @@ const deleteExpense = async (req, res) => {
 };
 
 // ✅ Download Excel
+// ✅ Download Excel
 const downloadFinanceExcel = async (req, res) => {
   try {
-    const { month, year } = req.query;
+    const { month, year, startDate, endDate } = req.query;
     let filter = { user: req.user.id };
 
-    if (month && year) {
-      const start = new Date(year, month - 1, 1);
-      const end = new Date(year, month, 0, 23, 59, 59);
+    // Apply date filtering based on month/year or startDate/endDate
+    if (startDate && endDate) {
+      // Validate date formats
+      if (!Date.parse(startDate) || !Date.parse(endDate)) {
+        return res.status(400).json({ success: false, message: 'Invalid startDate or endDate format' });
+      }
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      end.setHours(23, 59, 59, 999); // Include entire end date
+      if (start > end) {
+        return res.status(400).json({ success: false, message: 'startDate cannot be after endDate' });
+      }
+      filter.date = { $gte: start, $lte: end };
+    } else if (month && year) {
+      // Validate month and year
+      const monthNum = parseInt(month, 10);
+      const yearNum = parseInt(year, 10);
+      if (isNaN(monthNum) || isNaN(yearNum) || monthNum < 1 || monthNum > 12) {
+        return res.status(400).json({ success: false, message: 'Invalid month or year' });
+      }
+      const start = new Date(yearNum, monthNum - 1, 1);
+      const end = new Date(yearNum, monthNum, 0, 23, 59, 59, 999);
       filter.date = { $gte: start, $lte: end };
     }
 
@@ -562,7 +582,7 @@ const downloadFinanceExcel = async (req, res) => {
       }
     });
 
-    // Add summary at the bottom
+    // Add summary
     const totalIncome = incomes.reduce((acc, i) => acc + i.amount, 0);
     const totalExpense = expenses.reduce((acc, e) => acc + e.amount, 0);
     worksheet.addRow([]);
@@ -575,14 +595,17 @@ const downloadFinanceExcel = async (req, res) => {
     worksheet.getRow(worksheet.rowCount).font = { bold: true };
 
     // Set response headers
-    res.setHeader('Content-Disposition', `attachment; filename="finance_report_${month || 'all'}_${year || 'all'}.xlsx"`);
+    const filename = startDate && endDate
+      ? `finance_report_${startDate}_to_${endDate}.xlsx`
+      : `finance_report_${month || 'all'}_${year || 'all'}.xlsx`;
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
 
     await workbook.xlsx.write(res);
     res.end();
   } catch (err) {
-    console.error("❌ Error generating Excel:", err);
-    res.status(500).json({ success: false, error: "Server error" });
+    console.error('❌ Error generating Excel:', err);
+    res.status(500).json({ success: false, message: 'Server error' });
   }
 };
 
