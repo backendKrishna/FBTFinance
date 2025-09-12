@@ -6,7 +6,8 @@ const expenseSchema = new mongoose.Schema({
   amount: { type: Number, required: true },
   category: { type: String }, // e.g., "Salary", "Stationary", "Maintenance"
   date: { type: Date, default: Date.now },
-  notes: { type: String }
+  notes: { type: String },
+  user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }, // Added user field
 }, { timestamps: true });
 
 module.exports = mongoose.model('Expense', expenseSchema);

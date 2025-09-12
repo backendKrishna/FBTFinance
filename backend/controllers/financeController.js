@@ -266,67 +266,66 @@ const ExcelJS = require('exceljs');
 // ✅ Add new income
 const addIncome = async (req, res) => {
   try {
-    const { title, type, amount, date, category } = req.body;
-    if (!title || !amount || !date) {
-      return res.status(400).json({ success: false, message: "Missing required fields" });
+    const { title, type, amount, date, category, notes } = req.body;
+    if (!title || !type || !amount || !date) {
+      return res.status(400).json({ success: false, message: "Title, type, amount, and date are required" });
+    }
+    if (isNaN(amount) || amount <= 0) {
+      return res.status(400).json({ success: false, message: "Amount must be a positive number" });
+    }
+    if (!Date.parse(date)) {
+      return res.status(400).json({ success: false, message: "Invalid date format" });
     }
 
     const income = new Income({
       title,
       type,
-      amount,
-      date,
-      category,
-      user: req.user.id
+      amount: Number(amount),
+      date: new Date(date),
+      category: category || undefined,
+      notes,
+      user: req.user.id,
     });
 
     await income.save();
-    res.status(201).json({ success: true, income });
+    res.status(201).json({ success: true, message: "Income added successfully", income });
   } catch (err) {
     console.error("❌ Error adding income:", err);
-    res.status(500).json({ success: false, error: err.message });
+    res.status(500).json({ success: false, error: "Server error" });
   }
 };
-
 
 // ✅ Add new expense
 const addExpense = async (req, res) => {
   try {
-    const { title, type, amount, date, category } = req.body;
-
-    // 🔹 Basic validation
-    if (!title || !amount || !date) {
-      return res.status(400).json({
-        success: false,
-        message: "Title, amount, and date are required"
-      });
+    const { title, type, amount, date, category, notes } = req.body;
+    if (!title || !type || !amount || !date) {
+      return res.status(400).json({ success: false, message: "Title, type, amount, and date are required" });
+    }
+    if (isNaN(amount) || amount <= 0) {
+      return res.status(400).json({ success: false, message: "Amount must be a positive number" });
+    }
+    if (!Date.parse(date)) {
+      return res.status(400).json({ success: false, message: "Invalid date format" });
     }
 
-    // 🔹 Create expense
     const expense = new Expense({
       title,
       type,
-      amount,
-      date,
-      category,
-      user: req.user.id,   // needs authentication middleware to populate req.user
+      amount: Number(amount),
+      date: new Date(date),
+      category: category || undefined,
+      notes,
+      user: req.user.id,
     });
 
-    // 🔹 Save to DB
     await expense.save();
-
-    res.status(201).json({
-      success: true,
-      message: "Expense added successfully",
-      expense
-    });
-
+    res.status(201).json({ success: true, message: "Expense added successfully", expense });
   } catch (err) {
     console.error("❌ Error adding expense:", err);
-    res.status(500).json({ success: false, error: err.message });
+    res.status(500).json({ success: false, error: "Server error" });
   }
 };
-
 
 // ✅ Get incomes with filters
 const getIncomes = async (req, res) => {
@@ -339,14 +338,14 @@ const getIncomes = async (req, res) => {
       const end = new Date(year, month, 0, 23, 59, 59);
       filter.date = { $gte: start, $lte: end };
     }
-
     if (type) filter.type = type;
     if (category) filter.category = category;
 
     const incomes = await Income.find(filter).sort({ date: -1 });
     res.json({ success: true, incomes });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    console.error("❌ Error fetching incomes:", err);
+    res.status(500).json({ success: false, error: "Server error" });
   }
 };
 
@@ -361,14 +360,14 @@ const getExpenses = async (req, res) => {
       const end = new Date(year, month, 0, 23, 59, 59);
       filter.date = { $gte: start, $lte: end };
     }
-
     if (type) filter.type = type;
     if (category) filter.category = category;
 
     const expenses = await Expense.find(filter).sort({ date: -1 });
     res.json({ success: true, expenses });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    console.error("❌ Error fetching expenses:", err);
+    res.status(500).json({ success: false, error: "Server error" });
   }
 };
 
@@ -376,7 +375,7 @@ const getExpenses = async (req, res) => {
 const getFinanceSummary = async (req, res) => {
   try {
     const { month, year } = req.query;
-    let dateFilter = {};
+    let dateFilter = { user: req.user.id };
 
     if (month && year) {
       const start = new Date(year, month - 1, 1);
@@ -384,8 +383,10 @@ const getFinanceSummary = async (req, res) => {
       dateFilter.date = { $gte: start, $lte: end };
     }
 
-    const incomes = await Income.find({ user: req.user.id, ...dateFilter });
-    const expenses = await Expense.find({ user: req.user.id, ...dateFilter });
+    const [incomes, expenses] = await Promise.all([
+      Income.find(dateFilter),
+      Expense.find(dateFilter),
+    ]);
 
     const totalIncome = incomes.reduce((acc, i) => acc + i.amount, 0);
     const totalExpense = expenses.reduce((acc, e) => acc + e.amount, 0);
@@ -397,7 +398,8 @@ const getFinanceSummary = async (req, res) => {
       balance: totalIncome - totalExpense,
     });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    console.error("❌ Error fetching summary:", err);
+    res.status(500).json({ success: false, error: "Server error" });
   }
 };
 
@@ -405,15 +407,29 @@ const getFinanceSummary = async (req, res) => {
 const updateIncome = async (req, res) => {
   try {
     const { id } = req.params;
+    const { title, type, amount, date, category, notes } = req.body;
+    if (!title || !type || !amount || !date) {
+      return res.status(400).json({ success: false, message: "Title, type, amount, and date are required" });
+    }
+    if (isNaN(amount) || amount <= 0) {
+      return res.status(400).json({ success: false, message: "Amount must be a positive number" });
+    }
+    if (!Date.parse(date)) {
+      return res.status(400).json({ success: false, message: "Invalid date format" });
+    }
+
     const income = await Income.findOneAndUpdate(
       { _id: id, user: req.user.id },
-      req.body,
+      { title, type, amount: Number(amount), date: new Date(date), category: category || undefined, notes },
       { new: true }
     );
-    if (!income) return res.status(404).json({ success: false, message: 'Income not found' });
-    res.json({ success: true, message: 'Income updated', income });
+    if (!income) {
+      return res.status(404).json({ success: false, message: "Income not found or unauthorized" });
+    }
+    res.json({ success: true, message: "Income updated successfully", income });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    console.error("❌ Error updating income:", err);
+    res.status(500).json({ success: false, error: "Server error" });
   }
 };
 
@@ -422,10 +438,13 @@ const deleteIncome = async (req, res) => {
   try {
     const { id } = req.params;
     const income = await Income.findOneAndDelete({ _id: id, user: req.user.id });
-    if (!income) return res.status(404).json({ success: false, message: 'Income not found' });
-    res.json({ success: true, message: 'Income deleted' });
+    if (!income) {
+      return res.status(404).json({ success: false, message: "Income not found or unauthorized" });
+    }
+    res.json({ success: true, message: "Income deleted successfully" });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    console.error("❌ Error deleting income:", err);
+    res.status(500).json({ success: false, error: "Server error" });
   }
 };
 
@@ -433,15 +452,29 @@ const deleteIncome = async (req, res) => {
 const updateExpense = async (req, res) => {
   try {
     const { id } = req.params;
+    const { title, type, amount, date, category, notes } = req.body;
+    if (!title || !type || !amount || !date) {
+      return res.status(400).json({ success: false, message: "Title, type, amount, and date are required" });
+    }
+    if (isNaN(amount) || amount <= 0) {
+      return res.status(400).json({ success: false, message: "Amount must be a positive number" });
+    }
+    if (!Date.parse(date)) {
+      return res.status(400).json({ success: false, message: "Invalid date format" });
+    }
+
     const expense = await Expense.findOneAndUpdate(
       { _id: id, user: req.user.id },
-      req.body,
+      { title, type, amount: Number(amount), date: new Date(date), category: category || undefined, notes },
       { new: true }
     );
-    if (!expense) return res.status(404).json({ success: false, message: 'Expense not found' });
-    res.json({ success: true, message: 'Expense updated', expense });
+    if (!expense) {
+      return res.status(404).json({ success: false, message: "Expense not found or unauthorized" });
+    }
+    res.json({ success: true, message: "Expense updated successfully", expense });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    console.error("❌ Error updating expense:", err);
+    res.status(500).json({ success: false, error: "Server error" });
   }
 };
 
@@ -450,62 +483,106 @@ const deleteExpense = async (req, res) => {
   try {
     const { id } = req.params;
     const expense = await Expense.findOneAndDelete({ _id: id, user: req.user.id });
-    if (!expense) return res.status(404).json({ success: false, message: 'Expense not found' });
-    res.json({ success: true, message: 'Expense deleted' });
+    if (!expense) {
+      return res.status(404).json({ success: false, message: "Expense not found or unauthorized" });
+    }
+    res.json({ success: true, message: "Expense deleted successfully" });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    console.error("❌ Error deleting expense:", err);
+    res.status(500).json({ success: false, error: "Server error" });
   }
 };
 
 // ✅ Download Excel
 const downloadFinanceExcel = async (req, res) => {
   try {
-    const incomes = await Income.find({ user: req.user.id }).sort({ date: -1 });
-    const expenses = await Expense.find({ user: req.user.id }).sort({ date: -1 });
+    const { month, year } = req.query;
+    let filter = { user: req.user.id };
+
+    if (month && year) {
+      const start = new Date(year, month - 1, 1);
+      const end = new Date(year, month, 0, 23, 59, 59);
+      filter.date = { $gte: start, $lte: end };
+    }
+
+    const [incomes, expenses] = await Promise.all([
+      Income.find(filter).sort({ date: -1 }),
+      Expense.find(filter).sort({ date: -1 }),
+    ]);
 
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet('Finance Report');
 
+    // Define columns
     worksheet.columns = [
       { header: 'Type', key: 'type', width: 15 },
       { header: 'Title', key: 'title', width: 30 },
       { header: 'Category', key: 'category', width: 20 },
       { header: 'Amount (₹)', key: 'amount', width: 15 },
-      { header: 'Date', key: 'date', width: 20 }
+      { header: 'Date', key: 'date', width: 15 },
+      { header: 'Notes', key: 'notes', width: 30 },
     ];
 
-    incomes.forEach(i => {
+    // Add rows
+    incomes.forEach((i) => {
       worksheet.addRow({
         type: 'Income',
         title: i.title,
         category: i.category || '-',
         amount: i.amount,
-        date: new Date(i.date).toLocaleDateString()
+        date: new Date(i.date).toLocaleDateString('en-IN'),
+        notes: i.notes || '-',
       });
     });
 
-    expenses.forEach(e => {
+    expenses.forEach((e) => {
       worksheet.addRow({
         type: 'Expense',
         title: e.title,
         category: e.category || '-',
         amount: e.amount,
-        date: new Date(e.date).toLocaleDateString()
+        date: new Date(e.date).toLocaleDateString('en-IN'),
+        notes: e.notes || '-',
       });
     });
 
-    worksheet.getRow(1).eachCell(cell => {
+    // Style header
+    worksheet.getRow(1).eachCell((cell) => {
       cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
       cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF2E86C1' } };
+      cell.alignment = { vertical: 'middle', horizontal: 'center' };
     });
 
-    res.setHeader('Content-Disposition', 'attachment; filename="finance_report.xlsx"');
+    // Style data rows
+    worksheet.eachRow((row, rowNumber) => {
+      if (rowNumber > 1) {
+        row.eachCell((cell) => {
+          cell.alignment = { vertical: 'middle', horizontal: 'left' };
+        });
+      }
+    });
+
+    // Add summary at the bottom
+    const totalIncome = incomes.reduce((acc, i) => acc + i.amount, 0);
+    const totalExpense = expenses.reduce((acc, e) => acc + e.amount, 0);
+    worksheet.addRow([]);
+    worksheet.addRow(['Summary', '', '', '', '', '']);
+    worksheet.addRow(['Total Income', '', '', totalIncome, '', '']);
+    worksheet.addRow(['Total Expense', '', '', totalExpense, '', '']);
+    worksheet.addRow(['Balance', '', '', totalIncome - totalExpense, '', '']);
+    worksheet.getRow(worksheet.rowCount - 2).font = { bold: true };
+    worksheet.getRow(worksheet.rowCount - 1).font = { bold: true };
+    worksheet.getRow(worksheet.rowCount).font = { bold: true };
+
+    // Set response headers
+    res.setHeader('Content-Disposition', `attachment; filename="finance_report_${month || 'all'}_${year || 'all'}.xlsx"`);
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
 
     await workbook.xlsx.write(res);
     res.end();
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    console.error("❌ Error generating Excel:", err);
+    res.status(500).json({ success: false, error: "Server error" });
   }
 };
 
@@ -519,5 +596,5 @@ module.exports = {
   deleteIncome,
   updateExpense,
   deleteExpense,
-  downloadFinanceExcel
+  downloadFinanceExcel,
 };
