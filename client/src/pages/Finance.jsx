@@ -3522,6 +3522,7 @@ const Finance = () => {
 
         {/* Title + Excel Download */}
         <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
+       
           <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 flex items-center gap-2">
             <FiTrendingUp className="text-blue-600" /> Accounting Dashboard
           </h2>
@@ -3535,7 +3536,7 @@ const Finance = () => {
         </div>
 
         {/* Filter Type Selector */}
-        <div className="flex flex-col sm:flex-row gap-4 mb-6">
+        <div className="flex flex-col sm:flex-row gap-4 mb-6 ">
           <select
             value={filterType}
             onChange={(e) => {
@@ -3638,13 +3639,14 @@ const Finance = () => {
               placeholder="Title"
               value={newIncome.title}
               onChange={(e) => setNewIncome({ ...newIncome, title: e.target.value })}
-              className="border p-2 rounded focus:outline-none focus:ring-2 focus:ring-green-500 w-full sm:w-1/5"
+              // className="border p-2 rounded focus:outline-none focus:ring-2 focus:ring-green-500 w-full sm:w-1/5"
+              className="border p-2 rounded focus:outline-none focus:ring-2 focus:ring-green-500 w-full sm:w-1/5 cursor-pointer"
               aria-label="Income Title"
             />
             <select
               value={newIncome.category}
               onChange={(e) => setNewIncome({ ...newIncome, category: e.target.value })}
-              className="border p-2 rounded focus:outline-none focus:ring-2 focus:ring-green-500 w-full sm:w-1/5"
+              className="border p-2 rounded focus:outline-none focus:ring-2 focus:ring-green-500 w-full sm:w-1/5 cursor-pointer"
               aria-label="Select Income Category"
             >
               <option value="">Select Category (Optional)</option>
@@ -3659,7 +3661,7 @@ const Finance = () => {
               placeholder="Amount"
               value={newIncome.amount}
               onChange={(e) => setNewIncome({ ...newIncome, amount: e.target.value })}
-              className="border p-2 rounded focus:outline-none focus:ring-2 focus:ring-green-500 w-full sm:w-1/5"
+              className="border p-2 rounded focus:outline-none focus:ring-2 focus:ring-green-500 w-full sm:w-1/5 cursor-pointer"
               aria-label="Income Amount"
               min="0"
             />
@@ -3667,7 +3669,7 @@ const Finance = () => {
               type="date"
               value={newIncome.date}
               onChange={(e) => setNewIncome({ ...newIncome, date: e.target.value })}
-              className="border p-2 rounded focus:outline-none focus:ring-2 focus:ring-green-500 w-full sm:w-1/5"
+              className="border p-2 rounded focus:outline-none focus:ring-2 focus:ring-green-500 w-full sm:w-1/5 cursor-pointer"
               aria-label="Income Date"
             />
             <input
@@ -3675,7 +3677,7 @@ const Finance = () => {
               placeholder="Notes (optional)"
               value={newIncome.notes}
               onChange={(e) => setNewIncome({ ...newIncome, notes: e.target.value })}
-              className="border p-2 rounded focus:outline-none focus:ring-2 focus:ring-green-500 w-full sm:w-1/5"
+              className="border p-2 rounded focus:outline-none focus:ring-2 focus:ring-green-500 w-full sm:w-1/5 cursor-pointer"
               aria-label="Income Notes"
             />
             <button
@@ -3877,13 +3879,13 @@ const Finance = () => {
               placeholder="Title"
               value={newExpense.title}
               onChange={(e) => setNewExpense({ ...newExpense, title: e.target.value })}
-              className="border p-2 rounded focus:outline-none focus:ring-2 focus:ring-red-500 w-full sm:w-1/5"
+              className="border p-2 rounded focus:outline-none focus:ring-2 focus:ring-red-500 w-full sm:w-1/5 cursor-pointer"
               aria-label="Expense Title"
             />
             <select
               value={newExpense.category}
               onChange={(e) => setNewExpense({ ...newExpense, category: e.target.value })}
-              className="border p-2 rounded focus:outline-none focus:ring-2 focus:ring-red-500 w-full sm:w-1/5"
+              className="border p-2 rounded focus:outline-none focus:ring-2 focus:ring-red-500 w-full sm:w-1/5 cursor-pointer"
               aria-label="Select Expense Category"
             >
               <option value="">Select Category (Optional)</option>
@@ -3898,7 +3900,7 @@ const Finance = () => {
               placeholder="Amount"
               value={newExpense.amount}
               onChange={(e) => setNewExpense({ ...newExpense, amount: e.target.value })}
-              className="border p-2 rounded focus:outline-none focus:ring-2 focus:ring-red-500 w-full sm:w-1/5"
+              className="border p-2 rounded focus:outline-none focus:ring-2 focus:ring-red-500 w-full sm:w-1/5 cursor-pointer"
               aria-label="Expense Amount"
               min="0"
             />
@@ -3906,7 +3908,7 @@ const Finance = () => {
               type="date"
               value={newExpense.date}
               onChange={(e) => setNewExpense({ ...newExpense, date: e.target.value })}
-              className="border p-2 rounded focus:outline-none focus:ring-2 focus:ring-red-500 w-full sm:w-1/5"
+              className="border p-2 rounded focus:outline-none focus:ring-2 focus:ring-red-500 w-full sm:w-1/5 cursor-pointer"
               aria-label="Expense Date"
             />
             <input
@@ -3914,7 +3916,7 @@ const Finance = () => {
               placeholder="Notes (optional)"
               value={newExpense.notes}
               onChange={(e) => setNewExpense({ ...newExpense, notes: e.target.value })}
-              className="border p-2 rounded focus:outline-none focus:ring-2 focus:ring-red-500 w-full sm:w-1/5"
+              className="border p-2 rounded focus:outline-none focus:ring-2 focus:ring-red-500 w-full sm:w-1/5 cursor-pointer"
               aria-label="Expense Notes"
             />
             <button
@@ -4110,6 +4112,10 @@ const Finance = () => {
 };
 
 export default Finance;
+
+//--------------------------------
+
+
 
 
 
