@@ -43,7 +43,7 @@ const {
   deleteExpense,
   downloadFinanceExcel,
 } = require('../controllers/financeController');
-const { protect, adminOnly } = require('../middleware/auth');
+const { protect, adminOnly } = require('../middleware/authMiddleware');
 
 // Routes accessible to both admin and guest
 router.get('/incomes', protect, getIncomes);
