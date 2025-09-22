@@ -266,7 +266,7 @@ const ExcelJS = require('exceljs');
 // ✅ Add new income
 const addIncome = async (req, res) => {
   try {
-    const { title, type, amount, date, category, notes } = req.body;
+    const { title, type, amount,currency, date, category, notes } = req.body;
     if (!title || !type || !amount || !date) {
       return res.status(400).json({ success: false, message: "Title, type, amount, and date are required" });
     }
@@ -281,6 +281,7 @@ const addIncome = async (req, res) => {
       title,
       type,
       amount: Number(amount),
+        currency: currency || 'INR', // Use provided currency or default to INR
       date: new Date(date),
       category: category || undefined,
       notes,
@@ -298,7 +299,7 @@ const addIncome = async (req, res) => {
 // ✅ Add new expense
 const addExpense = async (req, res) => {
   try {
-    const { title, type, amount, date, category, notes } = req.body;
+    const { title, type, amount,currency, date, category, notes } = req.body;
     if (!title || !type || !amount || !date) {
       return res.status(400).json({ success: false, message: "Title, type, amount, and date are required" });
     }
@@ -313,6 +314,7 @@ const addExpense = async (req, res) => {
       title,
       type,
       amount: Number(amount),
+        currency: currency || 'INR', // Use provided currency or default to INR
       date: new Date(date),
       category: category || undefined,
       notes,

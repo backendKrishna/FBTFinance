@@ -6,6 +6,12 @@ const expenseSchema = new mongoose.Schema({
     type: { type: String, default: 'Expense' },
 
   amount: { type: Number, required: true },
+    currency: { 
+    type: String, 
+    required: true,
+    enum: ['USD', 'AED', 'INR', 'CAD', 'AUD'],
+    default: 'INR'
+  },
   // category: { type: String }, // e.g., "Salary", "Stationary", "Maintenance"
   category: { type: String, enum: ['Salaries','Incentives','Rent','Travel Allowance Agent','Travel Allowance Owner','Meta Recharge','Chargeback','Refunds','Miscellaneous Expenses','Call Payment'] },
 
