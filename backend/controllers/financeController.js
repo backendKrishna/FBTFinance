@@ -314,7 +314,7 @@ const addExpense = async (req, res) => {
       title,
       type,
       amount: Number(amount),
-        currency: currency || 'INR', // Use provided currency or default to INR
+      currency: currency || 'INR', // Use provided currency or default to INR
       date: new Date(date),
       category: category || undefined,
       notes,
@@ -374,9 +374,43 @@ const getExpenses = async (req, res) => {
 };
 
 // ✅ Finance Summary
+// const getFinanceSummary = async (req, res) => {
+//   try {
+//     const { month, year } = req.query;
+//     let dateFilter = { user: req.user.id };
+
+//     if (month && year) {
+//       const start = new Date(year, month - 1, 1);
+//       const end = new Date(year, month, 0, 23, 59, 59);
+//       dateFilter.date = { $gte: start, $lte: end };
+//     }
+
+//     const [incomes, expenses] = await Promise.all([
+//       Income.find(dateFilter),
+//       Expense.find(dateFilter),
+//     ]);
+
+//     const totalIncome = incomes.reduce((acc, i) => acc + i.amount, 0);
+//     const totalExpense = expenses.reduce((acc, e) => acc + e.amount, 0);
+
+//     res.json({
+//       success: true,
+//       totalIncome,
+//       totalExpense,
+//       balance: totalIncome - totalExpense,
+//     });
+//   } catch (err) {
+//     console.error("❌ Error fetching summary:", err);
+//     res.status(500).json({ success: false, error: "Server error" });
+//   }
+// };
+
+
+
+// ✅ Finance Summary WITH CURRENCY CONVERSION
 const getFinanceSummary = async (req, res) => {
   try {
-    const { month, year } = req.query;
+    const { month, year, currency = 'INR' } = req.query;
     let dateFilter = { user: req.user.id };
 
     if (month && year) {
@@ -390,20 +424,51 @@ const getFinanceSummary = async (req, res) => {
       Expense.find(dateFilter),
     ]);
 
-    const totalIncome = incomes.reduce((acc, i) => acc + i.amount, 0);
-    const totalExpense = expenses.reduce((acc, e) => acc + e.amount, 0);
+    // Currency conversion rates (1 foreign currency = X INR)
+    const conversionRates = {
+      USD: 83.33,    // 1 USD = 83.33 INR
+      AED: 22.67,    // 1 AED = 22.67 INR
+      INR: 1,        // Base currency
+      CAD: 61.50,    // 1 CAD = 61.50 INR
+      AUD: 54.00,    // 1 AUD = 54.00 INR
+    };
+
+    // Convert all amounts to INR first, then sum them
+    const totalIncomeINR = incomes.reduce((acc, income) => {
+      const amountInINR = income.amount * conversionRates[income.currency];
+      return acc + amountInINR;
+    }, 0);
+
+    const totalExpenseINR = expenses.reduce((acc, expense) => {
+      const amountInINR = expense.amount * conversionRates[expense.currency];
+      return acc + amountInINR;
+    }, 0);
+
+    const balanceINR = totalIncomeINR - totalExpenseINR;
+
+    // Convert to requested currency if needed
+    const convertToCurrency = (amountINR, targetCurrency) => {
+      if (targetCurrency === 'INR') return amountINR;
+      return amountINR / conversionRates[targetCurrency];
+    };
 
     res.json({
       success: true,
-      totalIncome,
-      totalExpense,
-      balance: totalIncome - totalExpense,
+      totalIncome: convertToCurrency(totalIncomeINR, currency),
+      totalExpense: convertToCurrency(totalExpenseINR, currency),
+      balance: convertToCurrency(balanceINR, currency),
+      // Also return INR values for reference
+      totalIncomeINR,
+      totalExpenseINR,
+      balanceINR,
+      currency: currency
     });
   } catch (err) {
     console.error("❌ Error fetching summary:", err);
     res.status(500).json({ success: false, error: "Server error" });
   }
 };
+
 
 // ✅ Update income
 const updateIncome = async (req, res) => {
