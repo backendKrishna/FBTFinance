@@ -264,9 +264,82 @@ const Expense = require('../models/Expense');
 const ExcelJS = require('exceljs');
 
 // ✅ Add new income
+// const addIncome = async (req, res) => {
+//   try {
+//     const { title, type, amount,currency, date, category, notes } = req.body;
+//     if (!title || !type || !amount || !date) {
+//       return res.status(400).json({ success: false, message: "Title, type, amount, and date are required" });
+//     }
+//     if (isNaN(amount) || amount <= 0) {
+//       return res.status(400).json({ success: false, message: "Amount must be a positive number" });
+//     }
+//     if (!Date.parse(date)) {
+//       return res.status(400).json({ success: false, message: "Invalid date format" });
+//     }
+
+//     const income = new Income({
+//       title,
+//       type,
+//       amount: Number(amount),
+//         currency: currency || 'INR', // Use provided currency or default to INR
+//       date: new Date(date),
+//       category: category || undefined,
+//       notes,
+//       user: req.user.id,
+//     });
+
+//     await income.save();
+//     res.status(201).json({ success: true, message: "Income added successfully", income });
+//   } catch (err) {
+//     console.error("❌ Error adding income:", err);
+//     res.status(500).json({ success: false, error: "Server error" });
+//   }
+// };
+
+// // ✅ Add new expense
+// const addExpense = async (req, res) => {
+//   try {
+//     const { title, type, amount,currency, date, category, notes } = req.body;
+//     if (!title || !type || !amount || !date) {
+//       return res.status(400).json({ success: false, message: "Title, type, amount, and date are required" });
+//     }
+//     if (isNaN(amount) || amount <= 0) {
+//       return res.status(400).json({ success: false, message: "Amount must be a positive number" });
+//     }
+//     if (!Date.parse(date)) {
+//       return res.status(400).json({ success: false, message: "Invalid date format" });
+//     }
+
+//     const expense = new Expense({
+//       title,
+//       type,
+//       amount: Number(amount),
+//       currency: currency || 'INR', // Use provided currency or default to INR
+//       date: new Date(date),
+//       category: category || undefined,
+//       notes,
+//       user: req.user.id,
+//     });
+
+//     await expense.save();
+//     res.status(201).json({ success: true, message: "Expense added successfully", expense });
+//   } catch (err) {
+//     console.error("❌ Error adding expense:", err);
+//     res.status(500).json({ success: false, error: "Server error" });
+//   }
+// };
+
+
+// ✅ Add new income
 const addIncome = async (req, res) => {
   try {
-    const { title, type, amount,currency, date, category, notes } = req.body;
+    // check permission
+    if (!req.user || req.user.email !== "admin@gmail.com") {
+      return res.status(403).json({ success: false, message: "You have no permission" });
+    }
+
+    const { title, type, amount, currency, date, category, notes } = req.body;
+
     if (!title || !type || !amount || !date) {
       return res.status(400).json({ success: false, message: "Title, type, amount, and date are required" });
     }
@@ -281,7 +354,7 @@ const addIncome = async (req, res) => {
       title,
       type,
       amount: Number(amount),
-        currency: currency || 'INR', // Use provided currency or default to INR
+      currency: currency || "INR", // default currency
       date: new Date(date),
       category: category || undefined,
       notes,
@@ -299,7 +372,13 @@ const addIncome = async (req, res) => {
 // ✅ Add new expense
 const addExpense = async (req, res) => {
   try {
-    const { title, type, amount,currency, date, category, notes } = req.body;
+    // check permission
+    if (!req.user || req.user.email !== "admin@gmail.com") {
+      return res.status(403).json({ success: false, message: "You have no permission" });
+    }
+
+    const { title, type, amount, currency, date, category, notes } = req.body;
+
     if (!title || !type || !amount || !date) {
       return res.status(400).json({ success: false, message: "Title, type, amount, and date are required" });
     }
@@ -314,7 +393,7 @@ const addExpense = async (req, res) => {
       title,
       type,
       amount: Number(amount),
-      currency: currency || 'INR', // Use provided currency or default to INR
+      currency: currency || "INR",
       date: new Date(date),
       category: category || undefined,
       notes,
@@ -328,6 +407,8 @@ const addExpense = async (req, res) => {
     res.status(500).json({ success: false, error: "Server error" });
   }
 };
+
+
 
 // ✅ Get incomes with filters
 // const getIncomes = async (req, res) => {
@@ -517,10 +598,108 @@ const getFinanceSummary = async (req, res) => {
 
 
 // ✅ Update income
+// const updateIncome = async (req, res) => {
+//   try {
+//     const { id } = req.params;
+//     const { title, type, amount, date, category, notes } = req.body;
+//     if (!title || !type || !amount || !date) {
+//       return res.status(400).json({ success: false, message: "Title, type, amount, and date are required" });
+//     }
+//     if (isNaN(amount) || amount <= 0) {
+//       return res.status(400).json({ success: false, message: "Amount must be a positive number" });
+//     }
+//     if (!Date.parse(date)) {
+//       return res.status(400).json({ success: false, message: "Invalid date format" });
+//     }
+
+//     const income = await Income.findOneAndUpdate(
+//       { _id: id, user: req.user.id },
+//       { title, type, amount: Number(amount), date: new Date(date), category: category || undefined, notes },
+//       { new: true }
+//     );
+//     if (!income) {
+//       return res.status(404).json({ success: false, message: "Income not found or unauthorized" });
+//     }
+//     res.json({ success: true, message: "Income updated successfully", income });
+//   } catch (err) {
+//     console.error("❌ Error updating income:", err);
+//     res.status(500).json({ success: false, error: "Server error" });
+//   }
+// };
+
+// // ✅ Delete income
+// const deleteIncome = async (req, res) => {
+//   try {
+//     const { id } = req.params;
+//     const income = await Income.findOneAndDelete({ _id: id, user: req.user.id });
+//     if (!income) {
+//       return res.status(404).json({ success: false, message: "Income not found or unauthorized" });
+//     }
+//     res.json({ success: true, message: "Income deleted successfully" });
+//   } catch (err) {
+//     console.error("❌ Error deleting income:", err);
+//     res.status(500).json({ success: false, error: "Server error" });
+//   }
+// };
+
+// // ✅ Update expense
+// const updateExpense = async (req, res) => {
+//   try {
+//     const { id } = req.params;
+//     const { title, type, amount, date, category, notes } = req.body;
+//     if (!title || !type || !amount || !date) {
+//       return res.status(400).json({ success: false, message: "Title, type, amount, and date are required" });
+//     }
+//     if (isNaN(amount) || amount <= 0) {
+//       return res.status(400).json({ success: false, message: "Amount must be a positive number" });
+//     }
+//     if (!Date.parse(date)) {
+//       return res.status(400).json({ success: false, message: "Invalid date format" });
+//     }
+
+//     const expense = await Expense.findOneAndUpdate(
+//       { _id: id, user: req.user.id },
+//       { title, type, amount: Number(amount), date: new Date(date), category: category || undefined, notes },
+//       { new: true }
+//     );
+//     if (!expense) {
+//       return res.status(404).json({ success: false, message: "Expense not found or unauthorized" });
+//     }
+//     res.json({ success: true, message: "Expense updated successfully", expense });
+//   } catch (err) {
+//     console.error("❌ Error updating expense:", err);
+//     res.status(500).json({ success: false, error: "Server error" });
+//   }
+// };
+
+// // ✅ Delete expense
+// const deleteExpense = async (req, res) => {
+//   try {
+//     const { id } = req.params;
+//     const expense = await Expense.findOneAndDelete({ _id: id, user: req.user.id });
+//     if (!expense) {
+//       return res.status(404).json({ success: false, message: "Expense not found or unauthorized" });
+//     }
+//     res.json({ success: true, message: "Expense deleted successfully" });
+//   } catch (err) {
+//     console.error("❌ Error deleting expense:", err);
+//     res.status(500).json({ success: false, error: "Server error" });
+//   }
+// };
+
+
+
+// ✅ Update income
 const updateIncome = async (req, res) => {
   try {
+    // check permission
+    if (!req.user || req.user.email !== "admin@gmail.com") {
+      return res.status(403).json({ success: false, message: "You have no permission" });
+    }
+
     const { id } = req.params;
     const { title, type, amount, date, category, notes } = req.body;
+
     if (!title || !type || !amount || !date) {
       return res.status(400).json({ success: false, message: "Title, type, amount, and date are required" });
     }
@@ -536,9 +715,11 @@ const updateIncome = async (req, res) => {
       { title, type, amount: Number(amount), date: new Date(date), category: category || undefined, notes },
       { new: true }
     );
+
     if (!income) {
       return res.status(404).json({ success: false, message: "Income not found or unauthorized" });
     }
+
     res.json({ success: true, message: "Income updated successfully", income });
   } catch (err) {
     console.error("❌ Error updating income:", err);
@@ -549,11 +730,18 @@ const updateIncome = async (req, res) => {
 // ✅ Delete income
 const deleteIncome = async (req, res) => {
   try {
+    // check permission
+    if (!req.user || req.user.email !== "admin@gmail.com") {
+      return res.status(403).json({ success: false, message: "You have no permission" });
+    }
+
     const { id } = req.params;
     const income = await Income.findOneAndDelete({ _id: id, user: req.user.id });
+
     if (!income) {
       return res.status(404).json({ success: false, message: "Income not found or unauthorized" });
     }
+
     res.json({ success: true, message: "Income deleted successfully" });
   } catch (err) {
     console.error("❌ Error deleting income:", err);
@@ -564,8 +752,14 @@ const deleteIncome = async (req, res) => {
 // ✅ Update expense
 const updateExpense = async (req, res) => {
   try {
+    // check permission
+    if (!req.user || req.user.email !== "admin@gmail.com") {
+      return res.status(403).json({ success: false, message: "You have no permission" });
+    }
+
     const { id } = req.params;
     const { title, type, amount, date, category, notes } = req.body;
+
     if (!title || !type || !amount || !date) {
       return res.status(400).json({ success: false, message: "Title, type, amount, and date are required" });
     }
@@ -581,9 +775,11 @@ const updateExpense = async (req, res) => {
       { title, type, amount: Number(amount), date: new Date(date), category: category || undefined, notes },
       { new: true }
     );
+
     if (!expense) {
       return res.status(404).json({ success: false, message: "Expense not found or unauthorized" });
     }
+
     res.json({ success: true, message: "Expense updated successfully", expense });
   } catch (err) {
     console.error("❌ Error updating expense:", err);
@@ -594,17 +790,25 @@ const updateExpense = async (req, res) => {
 // ✅ Delete expense
 const deleteExpense = async (req, res) => {
   try {
+    // check permission
+    if (!req.user || req.user.email !== "admin@gmail.com") {
+      return res.status(403).json({ success: false, message: "You have no permission" });
+    }
+
     const { id } = req.params;
     const expense = await Expense.findOneAndDelete({ _id: id, user: req.user.id });
+
     if (!expense) {
       return res.status(404).json({ success: false, message: "Expense not found or unauthorized" });
     }
+
     res.json({ success: true, message: "Expense deleted successfully" });
   } catch (err) {
     console.error("❌ Error deleting expense:", err);
     res.status(500).json({ success: false, error: "Server error" });
   }
 };
+
 
 // ✅ Download Excel
 // ✅ Download Excel
