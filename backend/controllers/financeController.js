@@ -330,10 +330,55 @@ const addExpense = async (req, res) => {
 };
 
 // ✅ Get incomes with filters
+// const getIncomes = async (req, res) => {
+//   try {
+//     const { month, year, type, category } = req.query;
+//     let filter = { user: req.user.id };
+
+//     if (month && year) {
+//       const start = new Date(year, month - 1, 1);
+//       const end = new Date(year, month, 0, 23, 59, 59);
+//       filter.date = { $gte: start, $lte: end };
+//     }
+//     if (type) filter.type = type;
+//     if (category) filter.category = category;
+
+//     const incomes = await Income.find(filter).sort({ date: -1 });
+//     res.json({ success: true, incomes });
+//   } catch (err) {
+//     console.error("❌ Error fetching incomes:", err);
+//     res.status(500).json({ success: false, error: "Server error" });
+//   }
+// };
+
+// // ✅ Get expenses with filters
+// const getExpenses = async (req, res) => {
+//   try {
+//     const { month, year, type, category } = req.query;
+//     let filter = { user: req.user.id };
+
+//     if (month && year) {
+//       const start = new Date(year, month - 1, 1);
+//       const end = new Date(year, month, 0, 23, 59, 59);
+//       filter.date = { $gte: start, $lte: end };
+//     }
+//     if (type) filter.type = type;
+//     if (category) filter.category = category;
+
+//     const expenses = await Expense.find(filter).sort({ date: -1 });
+//     res.json({ success: true, expenses });
+//   } catch (err) {
+//     console.error("❌ Error fetching expenses:", err);
+//     res.status(500).json({ success: false, error: "Server error" });
+//   }
+// };
+
+
+
 const getIncomes = async (req, res) => {
   try {
     const { month, year, type, category } = req.query;
-    let filter = { user: req.user.id };
+    let filter = {}; // Remove user filter to show ALL data to everyone
 
     if (month && year) {
       const start = new Date(year, month - 1, 1);
@@ -355,7 +400,7 @@ const getIncomes = async (req, res) => {
 const getExpenses = async (req, res) => {
   try {
     const { month, year, type, category } = req.query;
-    let filter = { user: req.user.id };
+    let filter = {}; // Remove user filter to show ALL data to everyone
 
     if (month && year) {
       const start = new Date(year, month - 1, 1);
@@ -372,6 +417,7 @@ const getExpenses = async (req, res) => {
     res.status(500).json({ success: false, error: "Server error" });
   }
 };
+
 
 // ✅ Finance Summary
 // const getFinanceSummary = async (req, res) => {
@@ -410,7 +456,8 @@ const getExpenses = async (req, res) => {
 const getFinanceSummary = async (req, res) => {
   try {
     const { month, year, currency = 'INR' } = req.query;
-    let dateFilter = { user: req.user.id };
+    // let dateFilter = { user: req.user.id };
+     let dateFilter = {};
 
     if (month && year) {
       const start = new Date(year, month - 1, 1);
