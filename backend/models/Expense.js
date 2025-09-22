@@ -13,7 +13,7 @@ const expenseSchema = new mongoose.Schema({
     default: 'INR'
   },
   // category: { type: String }, // e.g., "Salary", "Stationary", "Maintenance"
-  category: { type: String, enum: ['Salaries','Incentives','Rent','Travel Allowance Agent','Travel Allowance Owner','Meta Recharge','Chargeback','Refunds','Miscellaneous Expenses','Call Payment'] },
+  category: { type: String, enum: ['Salaries','Incentives','Rent','Travel Allowance Agent','Travel Allowance Owner','Meta Recharge','Chargeback','Refunds','Miscellaneous Expenses','Call Payment','Others'] },
 
   date: { type: Date, default: Date.now },
   notes: { type: String },

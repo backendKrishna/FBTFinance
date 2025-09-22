@@ -14,9 +14,9 @@ const incomeSchema = new mongoose.Schema({
     default: 'INR'
   },
 
-  
+
   // category: { type: String }, // optional, e.g., "Donation", "Other"
-  category: { type: String, enum: ['MCO Meta','MCO PPC','Meta Rental','Commission','Technology Sale','Domestic Tour Package','International Tour Package','Airline Ticket','Hotel','Car Hire','Activities','Airport Transfers','Visa'] },
+  category: { type: String, enum: ['MCO Meta','MCO PPC','Meta Rental','Commission','Technology Sale','Domestic Tour Package','International Tour Package','Airline Ticket','Hotel','Car Hire','Activities','Airport Transfers','Visa', 'Others'] },
 
   date: { type: Date, default: Date.now },
   notes: { type: String },
