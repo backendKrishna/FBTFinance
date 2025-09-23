@@ -6840,13 +6840,21 @@ const Finance = () => {
 
 
        
-          <button
+          {/* <button
             onClick={handleLogout}
             className="flex items-center gap-2 bg-red-500 px-4 py-2 rounded-lg hover:bg-red-600 transition mt-2 sm:mt-0"
             aria-label="Logout"
           >
             <FiLogOut /> Logout
-          </button>
+          </button> */}
+          <button
+  onClick={handleLogout}
+  className="flex items-center gap-2 bg-red-500 px-4 py-2 rounded-lg hover:bg-red-600 transition mt-2 sm:mt-0 cursor-pointer"
+  aria-label="Logout"
+>
+  <FiLogOut /> Logout
+</button>
+
         </div>
       </header>
 
@@ -6865,7 +6873,7 @@ const Finance = () => {
           </h2>
           <button
             onClick={handleDownloadExcel}
-            className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-700 transition"
+            className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-700 transition cursor-pointer"
             aria-label="Download Excel Report"
           >
             <FiDownload /> Download Excel
@@ -7081,7 +7089,7 @@ const Finance = () => {
             />
             <button
               onClick={handleAddIncome}
-              className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition w-full sm:w-auto"
+              className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition w-full sm:w-auto cursor-pointer"
               aria-label="Add Income"
             >
               Add
@@ -7224,19 +7232,19 @@ const Finance = () => {
                       </td>
 
                       {/* Action Buttons */}
-                      <td className="p-3 flex gap-2">
+                      <td className="p-3 flex gap-2 ">
                         {editingIncome?._id === i._id ? (
                           <>
                             <button
                               onClick={saveEditIncome}
-                              className="text-green-600 hover:text-green-800"
+                              className="text-green-600 hover:text-green-800 cursor-pointer"
                               aria-label="Save Income Edit"
                             >
                               <FiCheck />
                             </button>
                             <button
                               onClick={cancelEditIncome}
-                              className="text-red-600 hover:text-red-800"
+                              className="text-red-600 hover:text-red-800 cursor-pointer"
                               aria-label="Cancel Income Edit"
                             >
                               <FiX />
@@ -7246,14 +7254,14 @@ const Finance = () => {
                           <>
                             <button
                               onClick={() => startEditIncome(i)}
-                              className="text-blue-600 hover:text-blue-800"
+                              className="text-blue-600 hover:text-blue-800 cursor-pointer"
                               aria-label="Edit Income"
                             >
                               <FiEdit2 />
                             </button>
                             <button
                               onClick={() => handleDeleteIncome(i._id)}
-                              className="text-red-600 hover:text-red-800"
+                              className="text-red-600 hover:text-red-800 cursor-pointer"
                               aria-label="Delete Income"
                             >
                               <FiTrash2 />
@@ -7360,7 +7368,7 @@ const Finance = () => {
             />
             <button
               onClick={handleAddExpense}
-              className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition w-full sm:w-auto"
+              className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition w-full sm:w-auto cursor-pointer"
               aria-label="Add Expense"
             >
               Add
@@ -7508,14 +7516,14 @@ const Finance = () => {
                           <>
                             <button
                               onClick={saveEditExpense}
-                              className="text-green-600 hover:text-green-800"
+                              className="text-green-600 hover:text-green-800 cursor-pointer "
                               aria-label="Save Expense Edit"
                             >
                               <FiCheck />
                             </button>
                             <button
                               onClick={cancelEditExpense}
-                              className="text-red-600 hover:text-red-800"
+                              className="text-red-600 hover:text-red-800 cursor-pointer"
                               aria-label="Cancel Expense Edit"
                             >
                               <FiX />
@@ -7525,14 +7533,14 @@ const Finance = () => {
                           <>
                             <button
                               onClick={() => startEditExpense(e)}
-                              className="text-blue-600 hover:text-blue-800"
+                              className="text-blue-600 hover:text-blue-800 cursor-pointer "
                               aria-label="Edit Expense"
                             >
                               <FiEdit2 />
                             </button>
                             <button
                               onClick={() => handleDeleteExpense(e._id)}
-                              className="text-red-600 hover:text-red-800"
+                              className="text-red-600 hover:text-red-800 cursor-pointer"
                               aria-label="Delete Expense"
                             >
                               <FiTrash2 />

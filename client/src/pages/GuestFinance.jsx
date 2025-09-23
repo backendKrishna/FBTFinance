@@ -572,7 +572,7 @@ const GuestFinance = () => {
           <h1 className="text-xl sm:text-2xl font-bold tracking-wide">FareBuzzer Guest Dashboard</h1>
           <button
             onClick={handleLogout}
-            className="flex items-center gap-2 bg-red-500 px-4 py-2 rounded-lg hover:bg-red-600 transition mt-2 sm:mt-0"
+            className="flex items-center gap-2 bg-red-500 px-4 py-2 rounded-lg hover:bg-red-600 transition mt-2 sm:mt-0 cursor-pointer"
             aria-label="Logout"
           >
             <FiLogOut /> Logout
@@ -592,7 +592,7 @@ const GuestFinance = () => {
           </h2>
           <button
             onClick={handleDownloadExcel}
-            className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-700 transition"
+            className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-700 transition cursor-pointer"
             aria-label="Download Excel Report"
           >
             <FiDownload /> Download Excel
