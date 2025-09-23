@@ -751,8 +751,8 @@ const GuestFinance = () => {
                       {/* <td className="p-3 text-xs sm:text-base">
                         {i.user ? `${i.user.name} (${i.user.email})` : '-'}
                       </td> */}
-                       <td className="p-3 text-xs sm:text-base">
-                        {i.user ? `${i.user.name}` : '-'}
+                       <td className="p-3 text-xs sm:text-base">Admin
+                        {/* {i.user ? `${i.user.name}` : '-'} */}
                       </td>
                     </tr>
                   ))
@@ -823,8 +823,8 @@ const GuestFinance = () => {
                       <td className="p-3 text-xs sm:text-base">{e.currency}</td>
                       <td className="p-3 text-xs sm:text-base">{new Date(e.date).toLocaleDateString('en-IN')}</td>
                       <td className="p-3 text-xs sm:text-base">{e.notes || '-'}</td>
-                      <td className="p-3 text-xs sm:text-base">
-                        {e.user ? `${e.user.name}` : '-'}
+                      <td className="p-3 text-xs sm:text-base">Admin
+                        {/* {e.user ? `${e.user.name}` : '-'} */}
                       </td>
                     </tr>
                   ))
