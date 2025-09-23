@@ -1,0 +1,862 @@
+// import { useEffect, useState } from 'react';
+// import { useNavigate } from 'react-router-dom';
+// import api from '../api';
+// import {
+//   FiTrendingUp,
+//   FiDollarSign,
+//   FiDownload,
+//   FiLogOut,
+//   FiChevronLeft,
+//   FiChevronRight,
+// } from 'react-icons/fi';
+
+// const CURRENCIES = ['USD', 'AED', 'INR', 'CAD', 'AUD'];
+
+// const GuestFinance = () => {
+//   const [summary, setSummary] = useState(null);
+//   const [incomes, setIncomes] = useState([]);
+//   const [expenses, setExpenses] = useState([]);
+//   const [selectedCurrency, setSelectedCurrency] = useState('INR');
+//   const [error, setError] = useState('');
+//   const [isLoading, setIsLoading] = useState(false);
+//   const [month, setMonth] = useState(new Date().getMonth() + 1);
+//   const [year, setYear] = useState(new Date().getFullYear());
+//   const [startDate, setStartDate] = useState('');
+//   const [endDate, setEndDate] = useState('');
+//   const [filterType, setFilterType] = useState('monthYear');
+//   const [currentIncomePage, setCurrentIncomePage] = useState(1);
+//   const [currentExpensePage, setCurrentExpensePage] = useState(1);
+//   const itemsPerPage = 10;
+//   const navigate = useNavigate();
+
+//   // Currency symbol mapping
+//   const currencySymbols = {
+//     USD: '$', AED: 'د.إ', INR: '₹', CAD: 'C$', AUD: 'A$',
+//   };
+
+//   // Validate date range
+//   const validateDateRange = () => {
+//     if (filterType !== 'dateRange') return true;
+//     if (!startDate || !endDate) {
+//       setError('Both start date and end date are required.');
+//       setTimeout(() => setError(''), 3000);
+//       return false;
+//     }
+//     if (!Date.parse(startDate) || !Date.parse(endDate)) {
+//       setError('Invalid date format for start or end date.');
+//       setTimeout(() => setError(''), 3000);
+//       return false;
+//     }
+//     if (new Date(startDate) > new Date(endDate)) {
+//       setError('Start date cannot be after end date.');
+//       setTimeout(() => setError(''), 3000);
+//       return false;
+//     }
+//     return true;
+//   };
+
+//   // Fetch data
+//   const fetchData = async () => {
+//     if (filterType === 'dateRange' && !validateDateRange()) return;
+//     setIsLoading(true);
+//     try {
+//       const query = filterType === 'dateRange'
+//         ? `startDate=${startDate}&endDate=${endDate}&currency=${selectedCurrency}`
+//         : `month=${month}&year=${year}&currency=${selectedCurrency}`;
+
+//       const [summaryRes, incomesRes, expensesRes] = await Promise.all([
+//         api.get(`/finance/summary?${query}`),
+//         api.get(`/finance/incomes?${query}`),
+//         api.get(`/finance/expenses?${query}`),
+//       ]);
+
+//       setSummary(summaryRes.data);
+//       setIncomes(incomesRes.data.incomes || []);
+//       setExpenses(expensesRes.data.expenses || []);
+//     } catch (err) {
+//       setError(err.response?.data?.message || 'Failed to fetch financial data.');
+//       setTimeout(() => setError(''), 3000);
+//       setIncomes([]);
+//       setExpenses([]);
+//       setSummary(null);
+//     } finally {
+//       setIsLoading(false);
+//     }
+//   };
+
+//   useEffect(() => {
+//     fetchData();
+//   }, [month, year, startDate, endDate, filterType, selectedCurrency]);
+
+//   // Logout
+//   const handleLogout = () => {
+//     localStorage.removeItem('token');
+//     localStorage.removeItem('role');
+//     localStorage.removeItem('userId');
+//     setTimeout(() => navigate('/login'), 1500);
+//   };
+
+//   // Excel download
+//   const handleDownloadExcel = async () => {
+//     if (filterType === 'dateRange' && !validateDateRange()) return;
+//     try {
+//       const query = filterType === 'dateRange'
+//         ? `startDate=${startDate}&endDate=${endDate}&currency=${selectedCurrency}`
+//         : `month=${month}&year=${year}&currency=${selectedCurrency}`;
+
+//       const res = await api.get(`/finance/download?${query}`, { responseType: 'blob' });
+//       const url = window.URL.createObjectURL(new Blob([res.data]));
+//       const link = document.createElement('a');
+//       link.href = url;
+//       link.setAttribute(
+//         'download',
+//         filterType === 'dateRange'
+//           ? `finance_report_${startDate}_to_${endDate}_${selectedCurrency}.xlsx`
+//           : `finance_report_${month}_${year}_${selectedCurrency}.xlsx`
+//       );
+//       document.body.appendChild(link);
+//       link.click();
+//       document.body.removeChild(link);
+//       window.URL.revokeObjectURL(url);
+//     } catch (err) {
+//       setError(err.response?.data?.message || 'Failed to download Excel file.');
+//       setTimeout(() => setError(''), 3000);
+//     }
+//   };
+
+//   // Pagination
+//   const totalIncomePages = Math.ceil(incomes.length / itemsPerPage);
+//   const paginatedIncomes = incomes.slice((currentIncomePage - 1) * itemsPerPage, currentIncomePage * itemsPerPage);
+//   const totalExpensePages = Math.ceil(expenses.length / itemsPerPage);
+//   const paginatedExpenses = expenses.slice((currentExpensePage - 1) * itemsPerPage, currentExpensePage * itemsPerPage);
+
+//   return (
+//     <div className="flex flex-col min-h-screen bg-gray-100">
+//       {/* Fixed Title Bar */}
+//       <header className="fixed top-0 left-0 right-0 bg-blue-700 text-white shadow-lg z-10">
+//         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center px-4 sm:px-6 py-3 sm:py-4">
+//           <h1 className="text-xl sm:text-2xl font-bold tracking-wide">FareBuzzer Guest Dashboard</h1>
+//           <button
+//             onClick={handleLogout}
+//             className="flex items-center gap-2 bg-red-500 px-4 py-2 rounded-lg hover:bg-red-600 transition mt-2 sm:mt-0"
+//             aria-label="Logout"
+//           >
+//             <FiLogOut /> Logout
+//           </button>
+//         </div>
+//       </header>
+
+//       {/* Scrollable Content */}
+//       <div className="mt-20 sm:mt-16 max-w-7xl mx-auto p-4 sm:p-6 space-y-8 overflow-y-auto">
+//         {/* Messages */}
+//         {error && <div className="bg-red-100 text-red-700 p-3 rounded-lg shadow">{error}</div>}
+
+//         {/* Title + Excel Download */}
+//         <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
+//           <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 flex items-center gap-2">
+//             <FiTrendingUp className="text-blue-600" /> Guest Accounting Dashboard
+//           </h2>
+//           <button
+//             onClick={handleDownloadExcel}
+//             className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-700 transition"
+//             aria-label="Download Excel Report"
+//           >
+//             <FiDownload /> Download Excel
+//           </button>
+//         </div>
+
+
+
+
+
+
+//         {/* Filter Type and Currency Selector */}
+//         <div className="flex flex-col sm:flex-row gap-4 mb-6">
+//           <select
+//             value={filterType}
+//             onChange={(e) => {
+//               setFilterType(e.target.value);
+//               setStartDate('');
+//               setEndDate('');
+//               setMonth(new Date().getMonth() + 1);
+//               setYear(new Date().getFullYear());
+//             }}
+//             className="border p-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 w-full sm:w-auto cursor-pointer"
+//             aria-label="Select Filter Type"
+//           >
+//             <option value="monthYear">Month/Year</option>
+//             <option value="dateRange">Date Range</option>
+//           </select>
+//           <select
+//             value={selectedCurrency}
+//             onChange={(e) => setSelectedCurrency(e.target.value)}
+//             className="border p-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 w-full sm:w-auto cursor-pointer"
+//             aria-label="Select Currency"
+//           >
+//             {CURRENCIES.map((currency) => (
+//               <option key={currency} value={currency}>{currency}</option>
+//             ))}
+//           </select>
+//           {filterType === 'monthYear' ? (
+//             <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
+//               <select
+//                 value={month}
+//                 onChange={(e) => setMonth(Number(e.target.value))}
+//                 className="border p-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 w-full sm:w-auto cursor-pointer"
+//                 aria-label="Select Month"
+//               >
+//                 {[...Array(12)].map((_, i) => (
+//                   <option key={i + 1} value={i + 1}>
+//                     {new Date(0, i).toLocaleString('default', { month: 'long' })}
+//                   </option>
+//                 ))}
+//               </select>
+//               <select
+//                 value={year}
+//                 onChange={(e) => setYear(Number(e.target.value))}
+//                 className="border p-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 w-full sm:w-auto cursor-pointer"
+//                 aria-label="Select Year"
+//               >
+//                 {Array.from({ length: 10 }, (_, i) => new Date().getFullYear() - 1 + i).map((y) => (
+//                   <option key={y} value={y}>{y}</option>
+//                 ))}
+//               </select>
+//             </div>
+//           ) : (
+//             <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
+//               <input
+//                 type="date"
+//                 value={startDate}
+//                 onChange={(e) => setStartDate(e.target.value)}
+//                 className="border p-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 w-full sm:w-auto cursor-pointer"
+//                 aria-label="Select Start Date"
+//               />
+//               <input
+//                 type="date"
+//                 value={endDate}
+//                 onChange={(e) => setEndDate(e.target.value)}
+//                 className="border p-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 w-full sm:w-auto cursor-pointer"
+//                 aria-label="Select End Date"
+//               />
+//             </div>
+//           )}
+//         </div>
+
+//         {/* Summary */}
+//         {isLoading ? (
+//           <div className="text-center text-gray-500">Loading...</div>
+//         ) : summary ? (
+//           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 text-center">
+//             <div className="p-4 bg-green-50 rounded-lg shadow">
+//               <p className="text-sm text-gray-500">Total Income</p>
+//               <p className="text-lg sm:text-xl font-bold text-green-600">
+//                 {currencySymbols[selectedCurrency]}{summary.totalIncome?.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+//               </p>
+//               <p className="text-xs text-gray-500 mt-1">
+//                 (₹{summary.totalIncomeINR?.toLocaleString(undefined, { minimumFractionDigits: 2 })} INR)
+//               </p>
+//             </div>
+//             <div className="p-4 bg-red-50 rounded-lg shadow">
+//               <p className="text-sm text-gray-500">Total Expenses</p>
+//               <p className="text-lg sm:text-xl font-bold text-red-600">
+//                 {currencySymbols[selectedCurrency]}{summary.totalExpense?.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+//               </p>
+//               <p className="text-xs text-gray-500 mt-1">
+//                 (₹{summary.totalExpenseINR?.toLocaleString(undefined, { minimumFractionDigits: 2 })} INR)
+//               </p>
+//             </div>
+//             <div className="p-4 bg-blue-50 rounded-lg shadow">
+//               <p className="text-sm text-gray-500">Balance</p>
+//               <p className="text-lg sm:text-xl font-bold text-blue-600">
+//                 {currencySymbols[selectedCurrency]}{summary.balance?.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+//               </p>
+//               <p className="text-xs text-gray-500 mt-1">
+//                 (₹{summary.balanceINR?.toLocaleString(undefined, { minimumFractionDigits: 2 })} INR)
+//               </p>
+//             </div>
+//           </div>
+//         ) : (
+//           <div className="text-center text-gray-500">No summary data available.</div>
+//         )}
+
+//         {/* Income Section */}
+//         <div className="bg-white p-4 sm:p-10 rounded-2xl shadow-lg">
+//           <h3 className="text-lg sm:text-xl font-semibold mb-4 flex items-center gap-2">
+//             <FiDollarSign className="text-green-500" /> Income
+//           </h3>
+//           <div className="overflow-x-auto">
+//             <table className="w-full border-collapse rounded-lg shadow-sm">
+//               <thead className="bg-green-600 text-white">
+//                 <tr>
+//                   <th className="p-3 text-left text-xs sm:text-base">Type</th>
+//                   <th className="p-3 text-left text-xs sm:text-base">Category</th>
+//                   <th className="p-3 text-left text-xs sm:text-base">Title</th>
+//                   <th className="p-3 text-left text-xs sm:text-base">Amount</th>
+//                   <th className="p-3 text-left text-xs sm:text-base">Currency</th>
+//                   <th className="p-3 text-left text-xs sm:text-base">Date</th>
+//                   <th className="p-3 text-left text-xs sm:text-base">Notes</th>
+//                   <th className="p-3 text-left text-xs sm:text-base">Created By</th>
+//                 </tr>
+//               </thead>
+//               <tbody>
+//                 {isLoading ? (
+//                   <tr>
+//                     <td colSpan="8" className="p-3 text-center text-gray-500">Loading...</td>
+//                   </tr>
+//                 ) : paginatedIncomes.length === 0 ? (
+//                   <tr>
+//                     <td colSpan="8" className="p-3 text-center text-gray-500">No income records found.</td>
+//                   </tr>
+//                 ) : (
+//                   paginatedIncomes.map((i) => (
+//                     <tr key={i._id} className="border-b hover:bg-gray-50 transition">
+//                       <td className="p-3 text-xs sm:text-base">{i.type}</td>
+//                       <td className="p-3 text-xs sm:text-base">{i.category || '-'}</td>
+//                       <td className="p-3 text-xs sm:text-base">{i.title}</td>
+//                       <td className="p-3 text-green-600 font-semibold text-xs sm:text-base">
+//                         {currencySymbols[i.currency]}{i.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+//                       </td>
+//                       <td className="p-3 text-xs sm:text-base">{i.currency}</td>
+//                       <td className="p-3 text-xs sm:text-base">{new Date(i.date).toLocaleDateString('en-IN')}</td>
+//                       <td className="p-3 text-xs sm:text-base">{i.notes || '-'}</td>
+//                       <td className="p-3 text-xs sm:text-base">
+//                         {i.user ? `${i.user.name} (${i.user.email})` : '-'}
+//                       </td>
+//                     </tr>
+//                   ))
+//                 )}
+//               </tbody>
+//             </table>
+//           </div>
+//           {totalIncomePages > 1 && (
+//             <div className="flex justify-center items-center gap-4 mt-4">
+//               <button
+//                 onClick={() => setCurrentIncomePage((prev) => Math.max(prev - 1, 1))}
+//                 disabled={currentIncomePage === 1}
+//                 className="flex items-center gap-1 px-3 py-1 bg-gray-200 rounded hover:bg-gray-300 disabled:opacity-50"
+//                 aria-label="Previous Income Page"
+//               >
+//                 <FiChevronLeft /> Previous
+//               </button>
+//               <span className="text-gray-700">Page {currentIncomePage} of {totalIncomePages}</span>
+//               <button
+//                 onClick={() => setCurrentIncomePage((prev) => Math.min(prev + 1, totalIncomePages))}
+//                 disabled={currentIncomePage === totalIncomePages}
+//                 className="flex items-center gap-1 px-3 py-1 bg-gray-200 rounded hover:bg-gray-300 disabled:opacity-50"
+//                 aria-label="Next Income Page"
+//               >
+//                 Next <FiChevronRight />
+//               </button>
+//             </div>
+//           )}
+//         </div>
+
+//         {/* Expense Section */}
+//         <div className="bg-white p-4 sm:p-10 rounded-2xl shadow-lg">
+//           <h3 className="text-lg sm:text-xl font-semibold mb-4 flex items-center gap-2">
+//             <FiDollarSign className="text-red-500" /> Expenses
+//           </h3>
+//           <div className="overflow-x-auto">
+//             <table className="w-full border-collapse rounded-lg shadow-sm">
+//               <thead className="bg-red-600 text-white">
+//                 <tr>
+//                   <th className="p-3 text-left text-xs sm:text-base">Type</th>
+//                   <th className="p-3 text-left text-xs sm:text-base">Category</th>
+//                   <th className="p-3 text-left text-xs sm:text-base">Title</th>
+//                   <th className="p-3 text-left text-xs sm:text-base">Amount</th>
+//                   <th className="p-3 text-left text-xs sm:text-base">Currency</th>
+//                   <th className="p-3 text-left text-xs sm:text-base">Date</th>
+//                   <th className="p-3 text-left text-xs sm:text-base">Notes</th>
+//                   <th className="p-3 text-left text-xs sm:text-base">Created By</th>
+//                 </tr>
+//               </thead>
+//               <tbody>
+//                 {isLoading ? (
+//                   <tr>
+//                     <td colSpan="8" className="p-3 text-center text-gray-500">Loading...</td>
+//                   </tr>
+//                 ) : paginatedExpenses.length === 0 ? (
+//                   <tr>
+//                     <td colSpan="8" className="p-3 text-center text-gray-500">No expense records found.</td>
+//                   </tr>
+//                 ) : (
+//                   paginatedExpenses.map((e) => (
+//                     <tr key={e._id} className="border-b hover:bg-gray-50 transition">
+//                       <td className="p-3 text-xs sm:text-base">{e.type}</td>
+//                       <td className="p-3 text-xs sm:text-base">{e.category || '-'}</td>
+//                       <td className="p-3 text-xs sm:text-base">{e.title}</td>
+//                       <td className="p-3 text-red-600 font-semibold text-xs sm:text-base">
+//                         {currencySymbols[e.currency]}{e.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+//                       </td>
+//                       <td className="p-3 text-xs sm:text-base">{e.currency}</td>
+//                       <td className="p-3 text-xs sm:text-base">{new Date(e.date).toLocaleDateString('en-IN')}</td>
+//                       <td className="p-3 text-xs sm:text-base">{e.notes || '-'}</td>
+//                       <td className="p-3 text-xs sm:text-base">
+//                         {e.user ? `${e.user.name} (${e.user.email})` : '-'}
+//                       </td>
+//                     </tr>
+//                   ))
+//                 )}
+//               </tbody>
+//             </table>
+//           </div>
+//           {totalExpensePages > 1 && (
+//             <div className="flex justify-center items-center gap-4 mt-4">
+//               <button
+//                 onClick={() => setCurrentExpensePage((prev) => Math.max(prev - 1, 1))}
+//                 disabled={currentExpensePage === 1}
+//                 className="flex items-center gap-1 px-3 py-1 bg-gray-200 rounded hover:bg-gray-300 disabled:opacity-50"
+//                 aria-label="Previous Expense Page"
+//               >
+//                 <FiChevronLeft /> Previous
+//               </button>
+//               <span className="text-gray-700">Page {currentExpensePage} of {totalExpensePages}</span>
+//               <button
+//                 onClick={() => setCurrentExpensePage((prev) => Math.min(prev + 1, totalExpensePages))}
+//                 disabled={currentExpensePage === totalExpensePages}
+//                 className="flex items-center gap-1 px-3 py-1 bg-gray-200 rounded hover:bg-gray-300 disabled:opacity-50"
+//                 aria-label="Next Expense Page"
+//               >
+//                 Next <FiChevronRight />
+//               </button>
+//             </div>
+//           )}
+//         </div>
+//       </div>
+//     </div>
+//   );
+// };
+
+// export default GuestFinance;
+
+
+
+//===========
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import api from '../api';
+import {
+  FiTrendingUp,
+  FiDollarSign,
+  FiDownload,
+  FiLogOut,
+  FiChevronLeft,
+  FiChevronRight,
+} from 'react-icons/fi';
+
+const CURRENCIES = ['USD', 'AED', 'INR', 'CAD', 'AUD'];
+
+const GuestFinance = () => {
+  const [summary, setSummary] = useState(null);
+  const [incomes, setIncomes] = useState([]);
+  const [expenses, setExpenses] = useState([]);
+  const [selectedCurrency, setSelectedCurrency] = useState('INR');
+  const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [month, setMonth] = useState(new Date().getMonth() + 1);
+  const [year, setYear] = useState(new Date().getFullYear());
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [filterType, setFilterType] = useState('monthYear');
+  const [currentIncomePage, setCurrentIncomePage] = useState(1);
+  const [currentExpensePage, setCurrentExpensePage] = useState(1);
+  const itemsPerPage = 10;
+  const navigate = useNavigate();
+
+  // Currency symbol mapping
+  const currencySymbols = {
+    USD: '$', AED: 'د.إ', INR: '₹', CAD: 'C$', AUD: 'A$',
+  };
+
+  // Validate date range
+  const validateDateRange = () => {
+    if (filterType !== 'dateRange') return true;
+    if (!startDate || !endDate) {
+      setError('Both start date and end date are required.');
+      setTimeout(() => setError(''), 3000);
+      return false;
+    }
+    if (!Date.parse(startDate) || !Date.parse(endDate)) {
+      setError('Invalid date format for start or end date.');
+      setTimeout(() => setError(''), 3000);
+      return false;
+    }
+    if (new Date(startDate) > new Date(endDate)) {
+      setError('Start date cannot be after end date.');
+      setTimeout(() => setError(''), 3000);
+      return false;
+    }
+    return true;
+  };
+
+  // Fetch data
+  const fetchData = async () => {
+    if (filterType === 'dateRange' && !validateDateRange()) return;
+    setIsLoading(true);
+    try {
+      const query = filterType === 'dateRange'
+        ? `startDate=${startDate}&endDate=${endDate}&currency=${selectedCurrency}`
+        : `month=${month}&year=${year}&currency=${selectedCurrency}`;
+
+      const [summaryRes, incomesRes, expensesRes] = await Promise.all([
+        api.get(`/finance/summary?${query}`),
+        api.get(`/finance/incomes?${query}`),
+        api.get(`/finance/expenses?${query}`),
+      ]);
+
+      setSummary(summaryRes.data);
+      setIncomes(incomesRes.data.incomes || []);
+      setExpenses(expensesRes.data.expenses || []);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to fetch financial data.');
+      setTimeout(() => setError(''), 3000);
+      setIncomes([]);
+      setExpenses([]);
+      setSummary(null);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, [month, year, startDate, endDate, filterType, selectedCurrency]);
+
+  // Logout
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('role');
+    localStorage.removeItem('userId');
+    setTimeout(() => navigate('/login'), 1500);
+  };
+
+  // Excel download
+  const handleDownloadExcel = async () => {
+    if (filterType === 'dateRange' && !validateDateRange()) return;
+    try {
+      const query = filterType === 'dateRange'
+        ? `startDate=${startDate}&endDate=${endDate}&currency=${selectedCurrency}`
+        : `month=${month}&year=${year}&currency=${selectedCurrency}`;
+
+      const res = await api.get(`/finance/download?${query}`, { responseType: 'blob' });
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute(
+        'download',
+        filterType === 'dateRange'
+          ? `finance_report_${startDate}_to_${endDate}_${selectedCurrency}.xlsx`
+          : `finance_report_${month}_${year}_${selectedCurrency}.xlsx`
+      );
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to download Excel file.');
+      setTimeout(() => setError(''), 3000);
+    }
+  };
+
+  // Pagination
+  const totalIncomePages = Math.ceil(incomes.length / itemsPerPage);
+  const paginatedIncomes = incomes.slice((currentIncomePage - 1) * itemsPerPage, currentIncomePage * itemsPerPage);
+  const totalExpensePages = Math.ceil(expenses.length / itemsPerPage);
+  const paginatedExpenses = expenses.slice((currentExpensePage - 1) * itemsPerPage, currentExpensePage * itemsPerPage);
+
+  return (
+    <div className="flex flex-col min-h-screen bg-gray-100">
+      {/* Fixed Title Bar */}
+      <header className="fixed top-0 left-0 right-0 bg-blue-700 text-white shadow-lg z-10">
+        <div className="max-w-full mx-auto flex flex-col sm:flex-row justify-between items-center px-4 sm:px-78 py-3 sm:py-4">
+          <h1 className="text-xl sm:text-2xl font-bold tracking-wide">FareBuzzer Guest Dashboard</h1>
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-2 bg-red-500 px-4 py-2 rounded-lg hover:bg-red-600 transition mt-2 sm:mt-0"
+            aria-label="Logout"
+          >
+            <FiLogOut /> Logout
+          </button>
+        </div>
+      </header>
+
+      {/* Scrollable Content */}
+      <div className="mt-20 sm:mt-16 max-w-full mx-auto px-4 sm:px-8 py-6 sm:py-8 space-y-8 overflow-y-auto">
+        {/* Messages */}
+        {error && <div className="bg-red-100 text-red-700 p-3 rounded-lg shadow max-w-6xl mx-auto">{error}</div>}
+
+        {/* Title + Excel Download */}
+        <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4 max-w-6xl mx-auto">
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 flex items-center gap-2">
+            <FiTrendingUp className="text-blue-600" /> Guest Accounting Dashboard
+          </h2>
+          <button
+            onClick={handleDownloadExcel}
+            className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-700 transition"
+            aria-label="Download Excel Report"
+          >
+            <FiDownload /> Download Excel
+          </button>
+        </div>
+
+        {/* Filter Type and Currency Selector */}
+        <div className="flex flex-col sm:flex-row gap-4 mb-6 max-w-6xl mx-auto">
+          <select
+            value={filterType}
+            onChange={(e) => {
+              setFilterType(e.target.value);
+              setStartDate('');
+              setEndDate('');
+              setMonth(new Date().getMonth() + 1);
+              setYear(new Date().getFullYear());
+            }}
+            className="border p-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 w-full sm:w-48 cursor-pointer"
+            aria-label="Select Filter Type"
+          >
+            <option value="monthYear">Month/Year</option>
+            <option value="dateRange">Date Range</option>
+          </select>
+          <select
+            value={selectedCurrency}
+            onChange={(e) => setSelectedCurrency(e.target.value)}
+            className="border p-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 w-full sm:w-32 cursor-pointer"
+            aria-label="Select Currency"
+          >
+            {CURRENCIES.map((currency) => (
+              <option key={currency} value={currency}>{currency}</option>
+            ))}
+          </select>
+          {filterType === 'monthYear' ? (
+            <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
+              <select
+                value={month}
+                onChange={(e) => setMonth(Number(e.target.value))}
+                className="border p-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 w-full sm:w-48 cursor-pointer"
+                aria-label="Select Month"
+              >
+                {[...Array(12)].map((_, i) => (
+                  <option key={i + 1} value={i + 1}>
+                    {new Date(0, i).toLocaleString('default', { month: 'long' })}
+                  </option>
+                ))}
+              </select>
+              <select
+                value={year}
+                onChange={(e) => setYear(Number(e.target.value))}
+                className="border p-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 w-full sm:w-32 cursor-pointer"
+                aria-label="Select Year"
+              >
+                {Array.from({ length: 10 }, (_, i) => new Date().getFullYear() - 1 + i).map((y) => (
+                  <option key={y} value={y}>{y}</option>
+                ))}
+              </select>
+            </div>
+          ) : (
+            <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
+              <input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="border p-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 w-full sm:w-48 cursor-pointer"
+                aria-label="Select Start Date"
+              />
+              <input
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                className="border p-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 w-full sm:w-48 cursor-pointer"
+                aria-label="Select End Date"
+              />
+            </div>
+          )}
+        </div>
+
+        {/* Summary */}
+        {isLoading ? (
+          <div className="text-center text-gray-500 max-w-6xl mx-auto">Loading...</div>
+        ) : summary ? (
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 text-center max-w-6xl mx-auto">
+            <div className="p-4 bg-green-50 rounded-lg shadow">
+              <p className="text-sm text-gray-500">Total Income</p>
+              <p className="text-lg sm:text-xl font-bold text-green-600">
+                {currencySymbols[selectedCurrency]}{summary.totalIncome?.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+              </p>
+              <p className="text-xs text-gray-500 mt-1">
+                (₹{summary.totalIncomeINR?.toLocaleString(undefined, { minimumFractionDigits: 2 })} INR)
+              </p>
+            </div>
+            <div className="p-4 bg-red-50 rounded-lg shadow">
+              <p className="text-sm text-gray-500">Total Expenses</p>
+              <p className="text-lg sm:text-xl font-bold text-red-600">
+                {currencySymbols[selectedCurrency]}{summary.totalExpense?.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+              </p>
+              <p className="text-xs text-gray-500 mt-1">
+                (₹{summary.totalExpenseINR?.toLocaleString(undefined, { minimumFractionDigits: 2 })} INR)
+              </p>
+            </div>
+            <div className="p-4 bg-blue-50 rounded-lg shadow">
+              <p className="text-sm text-gray-500">Balance</p>
+              <p className="text-lg sm:text-xl font-bold text-blue-600">
+                {currencySymbols[selectedCurrency]}{summary.balance?.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+              </p>
+              <p className="text-xs text-gray-500 mt-1">
+                (₹{summary.balanceINR?.toLocaleString(undefined, { minimumFractionDigits: 2 })} INR)
+              </p>
+            </div>
+          </div>
+        ) : (
+          <div className="text-center text-gray-500 max-w-6xl mx-auto">No summary data available.</div>
+        )}
+
+        {/* Income Section */}
+        <div className="bg-white p-4 sm:p-8 rounded-2xl shadow-lg max-w-6xl mx-auto">
+          <h3 className="text-lg sm:text-xl font-semibold mb-4 flex items-center gap-2">
+            <FiDollarSign className="text-green-500" /> Income
+          </h3>
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse rounded-lg shadow-sm table-auto">
+              <thead className="bg-green-600 text-white">
+                <tr>
+                  <th className="p-3 text-left text-xs sm:text-base min-w-[100px]">Type</th>
+                  <th className="p-3 text-left text-xs sm:text-base min-w-[120px]">Category</th>
+                  <th className="p-3 text-left text-xs sm:text-base min-w-[150px]">Title</th>
+                  <th className="p-3 text-left text-xs sm:text-base min-w-[120px]">Amount</th>
+                  <th className="p-3 text-left text-xs sm:text-base min-w-[100px]">Currency</th>
+                  <th className="p-3 text-left text-xs sm:text-base min-w-[120px]">Date</th>
+                  <th className="p-3 text-left text-xs sm:text-base min-w-[200px]">Notes</th>
+                  <th className="p-3 text-left text-xs sm:text-base min-w-[200px]">Created By</th>
+                </tr>
+              </thead>
+              <tbody>
+                {isLoading ? (
+                  <tr>
+                    <td colSpan="8" className="p-3 text-center text-gray-500">Loading...</td>
+                  </tr>
+                ) : paginatedIncomes.length === 0 ? (
+                  <tr>
+                    <td colSpan="8" className="p-3 text-center text-gray-500">No income records found.</td>
+                  </tr>
+                ) : (
+                  paginatedIncomes.map((i) => (
+                    <tr key={i._id} className="border-b hover:bg-gray-50 transition">
+                      <td className="p-3 text-xs sm:text-base">{i.type}</td>
+                      <td className="p-3 text-xs sm:text-base">{i.category || '-'}</td>
+                      <td className="p-3 text-xs sm:text-base">{i.title}</td>
+                      <td className="p-3 text-green-600 font-semibold text-xs sm:text-base">
+                        {currencySymbols[i.currency]}{i.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                      </td>
+                      <td className="p-3 text-xs sm:text-base">{i.currency}</td>
+                      <td className="p-3 text-xs sm:text-base">{new Date(i.date).toLocaleDateString('en-IN')}</td>
+                      <td className="p-3 text-xs sm:text-base">{i.notes || '-'}</td>
+                      {/* <td className="p-3 text-xs sm:text-base">
+                        {i.user ? `${i.user.name} (${i.user.email})` : '-'}
+                      </td> */}
+                       <td className="p-3 text-xs sm:text-base">
+                        {i.user ? `${i.user.name}` : '-'}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+          {totalIncomePages > 1 && (
+            <div className="flex justify-center items-center gap-4 mt-4 max-w-6xl mx-auto">
+              <button
+                onClick={() => setCurrentIncomePage((prev) => Math.max(prev - 1, 1))}
+                disabled={currentIncomePage === 1}
+                className="flex items-center gap-1 px-3 py-1 bg-gray-200 rounded hover:bg-gray-300 disabled:opacity-50"
+                aria-label="Previous Income Page"
+              >
+                <FiChevronLeft /> Previous
+              </button>
+              <span className="text-gray-700">Page {currentIncomePage} of {totalIncomePages}</span>
+              <button
+                onClick={() => setCurrentIncomePage((prev) => Math.min(prev + 1, totalIncomePages))}
+                disabled={currentIncomePage === totalIncomePages}
+                className="flex items-center gap-1 px-3 py-1 bg-gray-200 rounded hover:bg-gray-300 disabled:opacity-50"
+                aria-label="Next Income Page"
+              >
+                Next <FiChevronRight />
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Expense Section */}
+        <div className="bg-white p-4 sm:p-8 rounded-2xl shadow-lg max-w-6xl mx-auto">
+          <h3 className="text-lg sm:text-xl font-semibold mb-4 flex items-center gap-2">
+            <FiDollarSign className="text-red-500" /> Expenses
+          </h3>
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse rounded-lg shadow-sm table-auto">
+              <thead className="bg-red-600 text-white">
+                <tr>
+                  <th className="p-3 text-left text-xs sm:text-base min-w-[100px]">Type</th>
+                  <th className="p-3 text-left text-xs sm:text-base min-w-[120px]">Category</th>
+                  <th className="p-3 text-left text-xs sm:text-base min-w-[150px]">Title</th>
+                  <th className="p-3 text-left text-xs sm:text-base min-w-[120px]">Amount</th>
+                  <th className="p-3 text-left text-xs sm:text-base min-w-[100px]">Currency</th>
+                  <th className="p-3 text-left text-xs sm:text-base min-w-[120px]">Date</th>
+                  <th className="p-3 text-left text-xs sm:text-base min-w-[200px]">Notes</th>
+                  <th className="p-3 text-left text-xs sm:text-base min-w-[200px]">Created By</th>
+                </tr>
+              </thead>
+              <tbody>
+                {isLoading ? (
+                  <tr>
+                    <td colSpan="8" className="p-3 text-center text-gray-500">Loading...</td>
+                  </tr>
+                ) : paginatedExpenses.length === 0 ? (
+                  <tr>
+                    <td colSpan="8" className="p-3 text-center text-gray-500">No expense records found.</td>
+                  </tr>
+                ) : (
+                  paginatedExpenses.map((e) => (
+                    <tr key={e._id} className="border-b hover:bg-gray-50 transition">
+                      <td className="p-3 text-xs sm:text-base">{e.type}</td>
+                      <td className="p-3 text-xs sm:text-base">{e.category || '-'}</td>
+                      <td className="p-3 text-xs sm:text-base">{e.title}</td>
+                      <td className="p-3 text-red-600 font-semibold text-xs sm:text-base">
+                        {currencySymbols[e.currency]}{e.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                      </td>
+                      <td className="p-3 text-xs sm:text-base">{e.currency}</td>
+                      <td className="p-3 text-xs sm:text-base">{new Date(e.date).toLocaleDateString('en-IN')}</td>
+                      <td className="p-3 text-xs sm:text-base">{e.notes || '-'}</td>
+                      <td className="p-3 text-xs sm:text-base">
+                        {e.user ? `${e.user.name}` : '-'}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+          {totalExpensePages > 1 && (
+            <div className="flex justify-center items-center gap-4 mt-4 max-w-6xl mx-auto">
+              <button
+                onClick={() => setCurrentExpensePage((prev) => Math.max(prev - 1, 1))}
+                disabled={currentExpensePage === 1}
+                className="flex items-center gap-1 px-3 py-1 bg-gray-200 rounded hover:bg-gray-300 disabled:opacity-50"
+                aria-label="Previous Expense Page"
+              >
+                <FiChevronLeft /> Previous
+              </button>
+              <span className="text-gray-700">Page {currentExpensePage} of {totalExpensePages}</span>
+              <button
+                onClick={() => setCurrentExpensePage((prev) => Math.min(prev + 1, totalExpensePages))}
+                disabled={currentExpensePage === totalExpensePages}
+                className="flex items-center gap-1 px-3 py-1 bg-gray-200 rounded hover:bg-gray-300 disabled:opacity-50"
+                aria-label="Next Expense Page"
+              >
+                Next <FiChevronRight />
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default GuestFinance;

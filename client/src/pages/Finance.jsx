@@ -6835,7 +6835,11 @@ const Finance = () => {
       {/* Fixed Title Bar */}
       <header className="fixed top-0 left-0 right-0 bg-blue-700 text-white shadow-lg z-10">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center px-4 sm:px-6 py-3 sm:py-4">
-          <h1 className="text-xl sm:text-2xl font-bold tracking-wide">FareBuzzer Accounting Report</h1>
+          {/* <h1 className="text-xl sm:text-2xl font-bold tracking-wide">FareBuzzer Accounting Report</h1> */}
+          <h1 className="text-xl sm:text-2xl font-bold tracking-wide">FareBuzzer Admin Dashboard</h1>
+
+
+       
           <button
             onClick={handleLogout}
             className="flex items-center gap-2 bg-red-500 px-4 py-2 rounded-lg hover:bg-red-600 transition mt-2 sm:mt-0"
