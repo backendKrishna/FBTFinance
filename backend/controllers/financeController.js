@@ -520,7 +520,7 @@ const getFinanceSummary = async (req, res) => {
 const updateIncome = async (req, res) => {
   try {
     const { id } = req.params;
-    const { title, type, amount, date, category, notes } = req.body;
+    const { title, type, amount,currency, date, category, notes } = req.body;
     if (!title || !type || !amount || !date) {
       return res.status(400).json({ success: false, message: "Title, type, amount, and date are required" });
     }
@@ -533,7 +533,7 @@ const updateIncome = async (req, res) => {
 
     const income = await Income.findOneAndUpdate(
       { _id: id, user: req.user.id },
-      { title, type, amount: Number(amount), date: new Date(date), category: category || undefined, notes },
+      { title, type, amount: Number(amount), date: new Date(date), category: category || undefined, notes ,currency},
       { new: true }
     );
     if (!income) {
@@ -565,7 +565,7 @@ const deleteIncome = async (req, res) => {
 const updateExpense = async (req, res) => {
   try {
     const { id } = req.params;
-    const { title, type, amount, date, category, notes } = req.body;
+    const { title, type, amount,currency, date, category, notes } = req.body;
     if (!title || !type || !amount || !date) {
       return res.status(400).json({ success: false, message: "Title, type, amount, and date are required" });
     }
@@ -578,7 +578,7 @@ const updateExpense = async (req, res) => {
 
     const expense = await Expense.findOneAndUpdate(
       { _id: id, user: req.user.id },
-      { title, type, amount: Number(amount), date: new Date(date), category: category || undefined, notes },
+      { title, type, amount: Number(amount), date: new Date(date), category: category || undefined, notes,currency },
       { new: true }
     );
     if (!expense) {
