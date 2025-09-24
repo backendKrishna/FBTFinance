@@ -4,7 +4,7 @@ const { protect, adminOnly } = require('../middleware/authMiddleware');
 const {
   addIncome, getIncomes, updateIncome, deleteIncome,
   addExpense, getExpenses, updateExpense, deleteExpense,
-  getFinanceSummary, downloadFinanceExcel
+  getFinanceSummary, downloadFinanceExcel, getConversionRates
 } = require('../controllers/financeController');
 
 const router = express.Router();
@@ -28,7 +28,7 @@ router.delete('/expense/:id', protect, adminOnly, deleteExpense);
 // router.get('/download/excel', protect, adminOnly, downloadFinanceExcel);
 router.get('/summary', protect,  getFinanceSummary);
 router.get('/download/excel', protect, downloadFinanceExcel);
-
+router.get('/rates', protect, getConversionRates);
 module.exports = router;
 
 

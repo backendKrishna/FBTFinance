@@ -886,6 +886,16 @@ const downloadFinanceExcel = async (req, res) => {
   }
 };
 
+// ✅ Get live currency conversion rates
+const getConversionRates = async (req, res) => {
+  try {
+    const rates = await getLiveRates();
+    res.json({ success: true, conversionRates: rates });
+  } catch (err) {
+    console.error("❌ Error fetching conversion rates:", err);
+    res.status(500).json({ success: false, error: "Failed to fetch conversion rates" });
+  }
+};
 
 module.exports = {
   addIncome,
@@ -898,6 +908,7 @@ module.exports = {
   updateExpense,
   deleteExpense,
   downloadFinanceExcel,
+  getConversionRates
 };
 
 
