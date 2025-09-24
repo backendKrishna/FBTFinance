@@ -721,56 +721,284 @@ const deleteExpense = async (req, res) => {
 
 // ✅ Download Excel WITH LIVE CURRENCY CONVERSION
 
+// const downloadFinanceExcel = async (req, res) => {
+//   try {
+//     const { month, year, startDate, endDate, currency = "INR" } = req.query;
+//     let filter = { user: req.user.id };
+
+//     // 🔹 Date filtering
+//     if (startDate && endDate) {
+//       if (!Date.parse(startDate) || !Date.parse(endDate)) {
+//         return res
+//           .status(400)
+//           .json({ success: false, message: "Invalid startDate or endDate format" });
+//       }
+//       const start = new Date(startDate);
+//       const end = new Date(endDate);
+//       end.setHours(23, 59, 59, 999);
+//       if (start > end) {
+//         return res
+//           .status(400)
+//           .json({ success: false, message: "startDate cannot be after endDate" });
+//       }
+//       filter.date = { $gte: start, $lte: end };
+//     } else if (month && year) {
+//       const monthNum = parseInt(month, 10);
+//       const yearNum = parseInt(year, 10);
+//       if (isNaN(monthNum) || isNaN(yearNum) || monthNum < 1 || monthNum > 12) {
+//         return res
+//           .status(400)
+//           .json({ success: false, message: "Invalid month or year" });
+//       }
+//       const start = new Date(yearNum, monthNum - 1, 1);
+//       const end = new Date(yearNum, monthNum, 0, 23, 59, 59, 999);
+//       filter.date = { $gte: start, $lte: end };
+//     }
+
+//     // 🔹 Fetch data
+//     const [incomes, expenses] = await Promise.all([
+//       Income.find(filter).sort({ date: -1 }),
+//       Expense.find(filter).sort({ date: -1 }),
+//     ]);
+
+//     // 🔹 Get live exchange rates (base INR)
+//     const rates = await getExchangeRates("INR"); // { USD: X, AED: Y, CAD: Z, ... }
+
+//     if (!rates || !rates[currency]) {
+//       return res
+//         .status(400)
+//         .json({ success: false, message: `Unsupported currency: ${currency}` });
+//     }
+
+//     // 🔹 Convert all to INR first
+//     const totalIncomeINR = incomes.reduce((acc, income) => {
+//       const rate = rates[income.currency] || 1;
+//       const amountInINR = income.amount * (rates.INR / rate);
+//       return acc + amountInINR;
+//     }, 0);
+
+//     const totalExpenseINR = expenses.reduce((acc, expense) => {
+//       const rate = rates[expense.currency] || 1;
+//       const amountInINR = expense.amount * (rates.INR / rate);
+//       return acc + amountInINR;
+//     }, 0);
+
+//     const balanceINR = totalIncomeINR - totalExpenseINR;
+
+//     // 🔹 INR → target currency
+//     const convertToCurrency = (amountINR, targetCurrency) => {
+//       if (targetCurrency === "INR") return amountINR;
+//       const rate = rates[targetCurrency] || 1;
+//       return amountINR * rate; // convert INR → target
+//     };
+
+//     const totalIncome = convertToCurrency(totalIncomeINR, currency);
+//     const totalExpense = convertToCurrency(totalExpenseINR, currency);
+//     const balance = convertToCurrency(balanceINR, currency);
+
+//     // 🔹 Setup Excel workbook
+//     const workbook = new ExcelJS.Workbook();
+//     const worksheet = workbook.addWorksheet("Finance Report");
+
+//     // Columns
+//     worksheet.columns = [
+//       { header: "Type", key: "type", width: 15 },
+//       { header: "Title", key: "title", width: 30 },
+//       { header: "Category", key: "category", width: 20 },
+//       { header: "Amount", key: "amount", width: 15 },
+//       { header: "Currency", key: "currency", width: 10 },
+//       { header: "Amount (INR)", key: "amountINR", width: 15 },
+//       { header: "Date", key: "date", width: 15 },
+//       { header: "Notes", key: "notes", width: 30 },
+//     ];
+
+//     // 🔹 Add income rows
+//     incomes.forEach((i) => {
+//       const rate = rates[i.currency] || 1;
+//       const amountInINR = i.amount * (rates.INR / rate);
+//       worksheet.addRow({
+//         type: "Income",
+//         title: i.title,
+//         category: i.category || "-",
+//         amount: i.amount,
+//         currency: i.currency,
+//         amountINR,
+//         date: new Date(i.date).toLocaleDateString("en-IN"),
+//         notes: i.notes || "-",
+//       });
+//     });
+
+//     // 🔹 Add expense rows
+//     expenses.forEach((e) => {
+//       const rate = rates[e.currency] || 1;
+//       const amountInINR = e.amount * (rates.INR / rate);
+//       worksheet.addRow({
+//         type: "Expense",
+//         title: e.title,
+//         category: e.category || "-",
+//         amount: e.amount,
+//         currency: e.currency,
+//         amountINR,
+//         date: new Date(e.date).toLocaleDateString("en-IN"),
+//         notes: e.notes || "-",
+//       });
+//     });
+
+//     // 🔹 Style header
+//     worksheet.getRow(1).eachCell((cell) => {
+//       cell.font = { bold: true, color: { argb: "FFFFFFFF" } };
+//       cell.fill = {
+//         type: "pattern",
+//         pattern: "solid",
+//         fgColor: { argb: "FF2E86C1" },
+//       };
+//       cell.alignment = { vertical: "middle", horizontal: "center" };
+//     });
+
+//     // 🔹 Style data rows
+//     worksheet.eachRow((row, rowNumber) => {
+//       if (rowNumber > 1) {
+//         row.eachCell((cell) => {
+//           cell.alignment = { vertical: "middle", horizontal: "left" };
+//         });
+//       }
+//     });
+
+//     // 🔹 Add summary
+//     worksheet.addRow([]);
+//     const summaryStart = worksheet.rowCount + 1;
+
+//     worksheet.addRow(["FINANCIAL SUMMARY"]);
+//     worksheet.addRow(["Report Currency", currency]);
+//     worksheet.addRow([]);
+
+//     worksheet.addRow(["Exchange Rates (base INR)"]);
+//     Object.entries(rates).forEach(([cur, rate]) => {
+//       if (["USD", "AED", "CAD", "AUD", "INR"].includes(cur)) {
+//         worksheet.addRow([`${cur} → INR`, rates.INR / rate]);
+//       }
+//     });
+//     worksheet.addRow([]);
+
+//     worksheet.addRow([`SUMMARY IN ${currency}`]);
+//     worksheet.addRow(["Total Income", totalIncome]);
+//     worksheet.addRow(["Total Expense", totalExpense]);
+//     worksheet.addRow(["Balance", balance]);
+//     worksheet.addRow([]);
+
+//     worksheet.addRow(["SUMMARY IN INR"]);
+//     worksheet.addRow(["Total Income (INR)", totalIncomeINR]);
+//     worksheet.addRow(["Total Expense (INR)", totalExpenseINR]);
+//     worksheet.addRow(["Balance (INR)", balanceINR]);
+
+//     // 🔹 Style summary
+//     const summaryEnd = worksheet.rowCount;
+//     for (let i = summaryStart; i <= summaryEnd; i++) {
+//       const row = worksheet.getRow(i);
+//       if (
+//         row.getCell(1).value &&
+//         [
+//           "FINANCIAL SUMMARY",
+//           "Exchange Rates (base INR)",
+//           `SUMMARY IN ${currency}`,
+//           "SUMMARY IN INR",
+//         ].includes(row.getCell(1).value)
+//       ) {
+//         row.eachCell((cell) => {
+//           cell.font = { bold: true, color: { argb: "FFFFFFFF" } };
+//           cell.fill = {
+//             type: "pattern",
+//             pattern: "solid",
+//             fgColor: { argb: "FF2E86C1" },
+//           };
+//         });
+//       } else {
+//         row.getCell(2).numFmt = "#,##0.00";
+//       }
+//     }
+
+//     // 🔹 Response headers
+//     const filename =
+//       startDate && endDate
+//         ? `finance_report_${startDate}_to_${endDate}_${currency}.xlsx`
+//         : `finance_report_${month || "all"}_${year || "all"}_${currency}.xlsx`;
+
+//     res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+//     res.setHeader(
+//       "Content-Type",
+//       "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+//     );
+
+//     await workbook.xlsx.write(res);
+//     res.end();
+//   } catch (err) {
+//     console.error("❌ Error generating Excel:", err);
+//     res.status(500).json({ success: false, message: "Server error" });
+//   }
+// };
+
+
 const downloadFinanceExcel = async (req, res) => {
   try {
+    // Validate user authentication
+    if (!req.user?.id) {
+      console.error("Authentication error: req.user.id is undefined");
+      return res.status(401).json({ success: false, message: "Unauthorized: User not authenticated" });
+    }
+
     const { month, year, startDate, endDate, currency = "INR" } = req.query;
     let filter = { user: req.user.id };
 
-    // 🔹 Date filtering
+    // Date filtering
     if (startDate && endDate) {
       if (!Date.parse(startDate) || !Date.parse(endDate)) {
-        return res
-          .status(400)
-          .json({ success: false, message: "Invalid startDate or endDate format" });
+        return res.status(400).json({ success: false, message: "Invalid startDate or endDate format" });
       }
       const start = new Date(startDate);
       const end = new Date(endDate);
       end.setHours(23, 59, 59, 999);
       if (start > end) {
-        return res
-          .status(400)
-          .json({ success: false, message: "startDate cannot be after endDate" });
+        return res.status(400).json({ success: false, message: "startDate cannot be after endDate" });
       }
       filter.date = { $gte: start, $lte: end };
     } else if (month && year) {
       const monthNum = parseInt(month, 10);
       const yearNum = parseInt(year, 10);
       if (isNaN(monthNum) || isNaN(yearNum) || monthNum < 1 || monthNum > 12) {
-        return res
-          .status(400)
-          .json({ success: false, message: "Invalid month or year" });
+        return res.status(400).json({ success: false, message: "Invalid month or year" });
       }
       const start = new Date(yearNum, monthNum - 1, 1);
       const end = new Date(yearNum, monthNum, 0, 23, 59, 59, 999);
       filter.date = { $gte: start, $lte: end };
     }
 
-    // 🔹 Fetch data
+    // Fetch data
+    console.log("Fetching incomes and expenses with filter:", filter);
     const [incomes, expenses] = await Promise.all([
-      Income.find(filter).sort({ date: -1 }),
-      Expense.find(filter).sort({ date: -1 }),
+      Income.find(filter).sort({ date: -1 }).catch(err => {
+        console.error("Error fetching incomes:", err);
+        throw new Error("Failed to fetch incomes");
+      }),
+      Expense.find(filter).sort({ date: -1 }).catch(err => {
+        console.error("Error fetching expenses:", err);
+        throw new Error("Failed to fetch expenses");
+      }),
     ]);
 
-    // 🔹 Get live exchange rates (base INR)
-    const rates = await getExchangeRates("INR"); // { USD: X, AED: Y, CAD: Z, ... }
+    // Get live exchange rates (base INR)
+    console.log("Fetching exchange rates for base currency INR");
+    const rates = await getExchangeRates("INR").catch(err => {
+      console.error("Failed to fetch exchange rates, using fallback:", err);
+      return { INR: 1, USD: 83, AED: 22, CAD: 61, AUD: 54 }; // Fallback rates
+    });
 
     if (!rates || !rates[currency]) {
-      return res
-        .status(400)
-        .json({ success: false, message: `Unsupported currency: ${currency}` });
+      console.error(`Unsupported currency: ${currency}, available rates:`, Object.keys(rates));
+      return res.status(400).json({ success: false, message: `Unsupported currency: ${currency}` });
     }
 
-    // 🔹 Convert all to INR first
+    // Convert all to INR
+    console.log("Converting amounts to INR");
     const totalIncomeINR = incomes.reduce((acc, income) => {
       const rate = rates[income.currency] || 1;
       const amountInINR = income.amount * (rates.INR / rate);
@@ -785,18 +1013,19 @@ const downloadFinanceExcel = async (req, res) => {
 
     const balanceINR = totalIncomeINR - totalExpenseINR;
 
-    // 🔹 INR → target currency
+    // INR → target currency
     const convertToCurrency = (amountINR, targetCurrency) => {
       if (targetCurrency === "INR") return amountINR;
       const rate = rates[targetCurrency] || 1;
-      return amountINR * rate; // convert INR → target
+      return amountINR * rate;
     };
 
     const totalIncome = convertToCurrency(totalIncomeINR, currency);
     const totalExpense = convertToCurrency(totalExpenseINR, currency);
     const balance = convertToCurrency(balanceINR, currency);
 
-    // 🔹 Setup Excel workbook
+    // Setup Excel workbook
+    console.log("Creating Excel workbook");
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet("Finance Report");
 
@@ -812,7 +1041,7 @@ const downloadFinanceExcel = async (req, res) => {
       { header: "Notes", key: "notes", width: 30 },
     ];
 
-    // 🔹 Add income rows
+    // Add income rows
     incomes.forEach((i) => {
       const rate = rates[i.currency] || 1;
       const amountInINR = i.amount * (rates.INR / rate);
@@ -821,14 +1050,14 @@ const downloadFinanceExcel = async (req, res) => {
         title: i.title,
         category: i.category || "-",
         amount: i.amount,
-        currency: i.currency,
-        amountINR,
+        currency: i.currency || "INR",
+        amountINR: Number(amountInINR.toFixed(2)),
         date: new Date(i.date).toLocaleDateString("en-IN"),
         notes: i.notes || "-",
       });
     });
 
-    // 🔹 Add expense rows
+    // Add expense rows
     expenses.forEach((e) => {
       const rate = rates[e.currency] || 1;
       const amountInINR = e.amount * (rates.INR / rate);
@@ -837,14 +1066,14 @@ const downloadFinanceExcel = async (req, res) => {
         title: e.title,
         category: e.category || "-",
         amount: e.amount,
-        currency: e.currency,
-        amountINR,
+        currency: e.currency || "INR",
+        amountINR: Number(amountInINR.toFixed(2)),
         date: new Date(e.date).toLocaleDateString("en-IN"),
         notes: e.notes || "-",
       });
     });
 
-    // 🔹 Style header
+    // Style header
     worksheet.getRow(1).eachCell((cell) => {
       cell.font = { bold: true, color: { argb: "FFFFFFFF" } };
       cell.fill = {
@@ -855,7 +1084,7 @@ const downloadFinanceExcel = async (req, res) => {
       cell.alignment = { vertical: "middle", horizontal: "center" };
     });
 
-    // 🔹 Style data rows
+    // Style data rows
     worksheet.eachRow((row, rowNumber) => {
       if (rowNumber > 1) {
         row.eachCell((cell) => {
@@ -864,7 +1093,7 @@ const downloadFinanceExcel = async (req, res) => {
       }
     });
 
-    // 🔹 Add summary
+    // Add summary
     worksheet.addRow([]);
     const summaryStart = worksheet.rowCount + 1;
 
@@ -875,23 +1104,23 @@ const downloadFinanceExcel = async (req, res) => {
     worksheet.addRow(["Exchange Rates (base INR)"]);
     Object.entries(rates).forEach(([cur, rate]) => {
       if (["USD", "AED", "CAD", "AUD", "INR"].includes(cur)) {
-        worksheet.addRow([`${cur} → INR`, rates.INR / rate]);
+        worksheet.addRow([`${cur} → INR`, Number((rates.INR / rate).toFixed(4))]);
       }
     });
     worksheet.addRow([]);
 
     worksheet.addRow([`SUMMARY IN ${currency}`]);
-    worksheet.addRow(["Total Income", totalIncome]);
-    worksheet.addRow(["Total Expense", totalExpense]);
-    worksheet.addRow(["Balance", balance]);
+    worksheet.addRow(["Total Income", Number(totalIncome.toFixed(2))]);
+    worksheet.addRow(["Total Expense", Number(totalExpense.toFixed(2))]);
+    worksheet.addRow(["Balance", Number(balance.toFixed(2))]);
     worksheet.addRow([]);
 
     worksheet.addRow(["SUMMARY IN INR"]);
-    worksheet.addRow(["Total Income (INR)", totalIncomeINR]);
-    worksheet.addRow(["Total Expense (INR)", totalExpenseINR]);
-    worksheet.addRow(["Balance (INR)", balanceINR]);
+    worksheet.addRow(["Total Income (INR)", Number(totalIncomeINR.toFixed(2))]);
+    worksheet.addRow(["Total Expense (INR)", Number(totalExpenseINR.toFixed(2))]);
+    worksheet.addRow(["Balance (INR)", Number(balanceINR.toFixed(2))]);
 
-    // 🔹 Style summary
+    // Style summary
     const summaryEnd = worksheet.rowCount;
     for (let i = summaryStart; i <= summaryEnd; i++) {
       const row = worksheet.getRow(i);
@@ -917,7 +1146,7 @@ const downloadFinanceExcel = async (req, res) => {
       }
     }
 
-    // 🔹 Response headers
+    // Response headers
     const filename =
       startDate && endDate
         ? `finance_report_${startDate}_to_${endDate}_${currency}.xlsx`
@@ -929,13 +1158,21 @@ const downloadFinanceExcel = async (req, res) => {
       "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     );
 
+    // Write workbook to response
+    console.log("Writing Excel file to response");
     await workbook.xlsx.write(res);
     res.end();
   } catch (err) {
-    console.error("❌ Error generating Excel:", err);
-    res.status(500).json({ success: false, message: "Server error" });
+    console.error("Error generating Excel:", {
+      message: err.message,
+      stack: err.stack,
+      query: req.query,
+      userId: req.user?.id,
+    });
+    res.status(500).json({ success: false, message: "Failed to generate Excel file. Please try again." });
   }
 };
+
 
 
 module.exports = {
