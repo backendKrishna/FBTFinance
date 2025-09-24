@@ -1173,7 +1173,16 @@ const downloadFinanceExcel = async (req, res) => {
   }
 };
 
-
+const getLiveExchangeRates = async (req, res) => {
+  try {
+    const { base = "INR" } = req.query;
+    const rates = await getExchangeRates(base);
+    res.json({ success: true, rates });
+  } catch (err) {
+    console.error("❌ Error fetching exchange rates:", err);
+    res.status(500).json({ success: false, message: "Failed to fetch exchange rates" });
+  }
+};
 
 module.exports = {
   addIncome,
@@ -1186,6 +1195,7 @@ module.exports = {
   updateExpense,
   deleteExpense,
   downloadFinanceExcel,
+  getLiveExchangeRates
 };
 
 
